@@ -98,7 +98,11 @@ def login(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    user = db.query(models.User).filter(models.User.email == email).first()
+    search_email = email
+    if email.lower() == "admin":
+        search_email = "admin@sucreshop.com"
+        
+    user = db.query(models.User).filter(models.User.email == search_email).first()
     if not user or not auth.verify_password(password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -122,6 +126,7 @@ def login(
             "email": user.email,
             "full_name": user.full_name,
             "is_store_owner": user.is_store_owner,
+            "is_admin": user.is_admin,
             "store_id": store_id
         }
     }
@@ -135,7 +140,7 @@ def get_me(current_user: models.User = Depends(auth.get_current_user)):
 
 @app.get("/api/stores", response_model=List[schemas.StoreResponse])
 def get_all_stores(db: Session = Depends(get_db)):
-    return db.query(models.Store).all()
+    return db.query(models.Store).filter(models.Store.status == "approved").all()
 
 @app.get("/api/stores/{store_id}", response_model=schemas.StoreResponse)
 def get_store_by_id(store_id: int, db: Session = Depends(get_db)):
@@ -168,7 +173,7 @@ def get_all_products(
     in_stock: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
-    query = db.query(models.Product)
+    query = db.query(models.Product).join(models.Store).filter(models.Store.status == "approved")
     if category:
         query = query.filter(models.Product.category == category)
     if brand:
@@ -189,7 +194,7 @@ def ai_search(query: str, db: Session = Depends(get_db)):
     interpretation = parse_query(query)
     
     # Build query filters dynamically
-    db_query = db.query(models.Product)
+    db_query = db.query(models.Product).join(models.Store).filter(models.Store.status == "approved")
     
     if interpretation["category"]:
         db_query = db_query.filter(models.Product.category == interpretation["category"])
@@ -486,6 +491,94 @@ def delete_product(
     db.commit()
     return {"detail": "Producto eliminado exitosamente."}
 
+
+# --- ADMINISTRATIVE ENDPOINTS ---
+
+@app.get("/api/admin/stores", response_model=List[schemas.StoreAdminResponse])
+def admin_get_stores(
+    db: Session = Depends(get_db),
+    current_admin: models.User = Depends(auth.get_current_admin)
+):
+    stores = db.query(models.Store).all()
+    results = []
+    for store in stores:
+        owner = db.query(models.User).filter(models.User.id == store.owner_id).first()
+        results.append(
+            schemas.StoreAdminResponse(
+                id=store.id,
+                owner_id=store.owner_id,
+                name=store.name,
+                description=store.description,
+                address=store.address,
+                phone=store.phone,
+                website_url=store.website_url,
+                instagram_url=store.instagram_url,
+                facebook_url=store.facebook_url,
+                twitter_url=store.twitter_url,
+                logo_url=store.logo_url,
+                status=store.status,
+                status_reason=store.status_reason,
+                owner_email=owner.email if owner else "Sin correo",
+                owner_name=owner.full_name if owner else "Sin nombre"
+            )
+        )
+    return results
+
+@app.post("/api/admin/stores/{store_id}/approve", response_model=schemas.StoreResponse)
+def admin_approve_store(
+    store_id: int,
+    db: Session = Depends(get_db),
+    current_admin: models.User = Depends(auth.get_current_admin)
+):
+    store = db.query(models.Store).filter(models.Store.id == store_id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="La tienda no existe.")
+    
+    store.status = "approved"
+    store.status_reason = None
+    db.commit()
+    db.refresh(store)
+    return store
+
+@app.post("/api/admin/stores/{store_id}/reject", response_model=schemas.StoreResponse)
+def admin_reject_store(
+    store_id: int,
+    req: schemas.AdminActionRequest,
+    db: Session = Depends(get_db),
+    current_admin: models.User = Depends(auth.get_current_admin)
+):
+    if not req.reason.strip():
+        raise HTTPException(status_code=400, detail="Debe ingresar un motivo obligatorio para el rechazo.")
+        
+    store = db.query(models.Store).filter(models.Store.id == store_id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="La tienda no existe.")
+    
+    store.status = "rejected"
+    store.status_reason = req.reason.strip()
+    db.commit()
+    db.refresh(store)
+    return store
+
+@app.post("/api/admin/stores/{store_id}/delete", response_model=schemas.StoreResponse)
+def admin_delete_store(
+    store_id: int,
+    req: schemas.AdminActionRequest,
+    db: Session = Depends(get_db),
+    current_admin: models.User = Depends(auth.get_current_admin)
+):
+    if not req.reason.strip():
+        raise HTTPException(status_code=400, detail="Debe ingresar un motivo obligatorio para la eliminación.")
+        
+    store = db.query(models.Store).filter(models.Store.id == store_id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="La tienda no existe.")
+    
+    store.status = "deleted"
+    store.status_reason = req.reason.strip()
+    db.commit()
+    db.refresh(store)
+    return store
 
 # --- SERVING STATIC FILES ---
 

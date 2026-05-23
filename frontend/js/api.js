@@ -151,5 +151,37 @@ const api = {
         return await this.request(`${API_BASE}/api/products/${productId}/delete`, {
             method: "DELETE"
         });
+    },
+
+    // --- ADMINISTRATIVE OPERATIONS ---
+
+    async adminGetStores() {
+        return await this.request(`${API_BASE}/api/admin/stores`);
+    },
+
+    async adminApproveStore(storeId) {
+        return await this.request(`${API_BASE}/api/admin/stores/${storeId}/approve`, {
+            method: "POST"
+        });
+    },
+
+    async adminRejectStore(storeId, reason) {
+        return await this.request(`${API_BASE}/api/admin/stores/${storeId}/reject`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ reason })
+        });
+    },
+
+    async adminDeleteStore(storeId, reason) {
+        return await this.request(`${API_BASE}/api/admin/stores/${storeId}/delete`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ reason })
+        });
     }
 };

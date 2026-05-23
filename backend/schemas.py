@@ -15,6 +15,7 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: str
     is_store_owner: bool = False
+    is_admin: bool = False
 
 class UserCreate(UserBase):
     password: str
@@ -53,6 +54,8 @@ class StoreResponse(StoreBase):
     id: int
     owner_id: int
     logo_url: Optional[str] = None
+    status: str
+    status_reason: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -107,3 +110,10 @@ class AISearchInterpretation(BaseModel):
 class AISearchResponse(BaseModel):
     interpretation: AISearchInterpretation
     results: List[ProductResponse]
+
+class AdminActionRequest(BaseModel):
+    reason: str
+
+class StoreAdminResponse(StoreResponse):
+    owner_email: str
+    owner_name: str

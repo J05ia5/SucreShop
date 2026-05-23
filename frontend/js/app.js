@@ -98,6 +98,17 @@ function handleRouting() {
         document.getElementById("view-store-dashboard").classList.remove("hidden");
         loadStoreDashboard();
     } 
+    else if (route === "#admin" || route === "#admin-dashboard") {
+        // Auth Guard for admin
+        if (!state.token || !state.user || !state.user.is_admin) {
+            showToast("Acceso denegado. Se requieren permisos de administrador.", "error");
+            window.location.hash = "#landing";
+            return;
+        }
+        state.currentView = "admin-dashboard";
+        document.getElementById("view-admin-dashboard").classList.remove("hidden");
+        loadAdminDashboard();
+    }
     else {
         // Fallback to landing
         window.location.hash = "#landing";
@@ -106,6 +117,8 @@ function handleRouting() {
     // Close modal if route changes
     closeModal("auth-modal");
     closeModal("product-editor-modal");
+    closeModal("admin-store-detail-modal");
+    closeModal("admin-action-modal");
     
     // Re-create icons for static layouts
     setTimeout(() => {
@@ -118,9 +131,11 @@ function updateAuthNavbar() {
     const container = document.getElementById("auth-nav-container");
     const mainNav = document.getElementById("main-nav");
     
-    // Remove dashboard link from nav if exists
+    // Remove dashboard and admin links from nav if exists
     const dashNavItem = document.getElementById("nav-dash-item");
     if (dashNavItem) dashNavItem.remove();
+    const adminNavItem = document.getElementById("nav-admin-item");
+    if (adminNavItem) adminNavItem.remove();
 
     if (state.token && state.user) {
         // Show dashboard nav link if owner
@@ -132,6 +147,16 @@ function updateAuthNavbar() {
             dashLink.dataset.view = "dashboard";
             dashLink.textContent = "Panel de Control";
             mainNav.appendChild(dashLink);
+        }
+        // Show admin dashboard nav link if admin
+        if (state.user.is_admin) {
+            const adminLink = document.createElement("a");
+            adminLink.href = "#admin";
+            adminLink.id = "nav-admin-item";
+            adminLink.className = `nav-item ${state.currentView === 'admin-dashboard' ? 'active' : ''}`;
+            adminLink.dataset.view = "admin-dashboard";
+            adminLink.textContent = "Panel Admin";
+            mainNav.appendChild(adminLink);
         }
         
         // Logged In Navbar
@@ -768,6 +793,53 @@ async function loadStoreDashboard() {
         document.getElementById("dash-store-name").textContent = storeProfile.name;
         document.getElementById("dash-owner-name").textContent = state.user.full_name;
         
+        // Update store status banner
+        const banner = document.getElementById("store-status-banner");
+        banner.className = ""; // Reset classes
+        banner.classList.add("hidden");
+        
+        if (storeProfile.status === "pending") {
+            banner.classList.remove("hidden");
+            banner.style.backgroundColor = "rgba(245, 158, 11, 0.15)";
+            banner.style.borderColor = "rgba(245, 158, 11, 0.3)";
+            banner.style.color = "#fbbf24";
+            banner.innerHTML = `
+                <i data-lucide="clock" style="margin-top: 0.1rem; flex-shrink: 0;"></i>
+                <div>
+                    <h5 style="font-weight: 700; font-size: 0.95rem;">Tienda Pendiente de Aprobación</h5>
+                    <p style="font-size: 0.85rem; opacity: 0.9; margin-top: 0.2rem;">Tu tienda oficial está siendo revisada por el equipo de administración. Tus productos y perfil público no serán visibles en las búsquedas ni exploración pública hasta que seas aprobado.</p>
+                </div>
+            `;
+        } else if (storeProfile.status === "rejected") {
+            banner.classList.remove("hidden");
+            banner.style.backgroundColor = "rgba(239, 68, 68, 0.15)";
+            banner.style.borderColor = "rgba(239, 68, 68, 0.3)";
+            banner.style.color = "#f87171";
+            banner.innerHTML = `
+                <i data-lucide="x-circle" style="margin-top: 0.1rem; flex-shrink: 0;"></i>
+                <div>
+                    <h5 style="font-weight: 700; font-size: 0.95rem;">Solicitud de Registro Rechazada</h5>
+                    <p style="font-size: 0.85rem; opacity: 0.9; margin-top: 0.2rem;">Tu solicitud de registro fue rechazada por el administrador y tu catálogo se encuentra inactivo.</p>
+                    <p style="font-size: 0.85rem; margin-top: 0.4rem; font-weight: 600; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 6px;">Motivo del Rechazo: ${storeProfile.status_reason || 'No especificado.'}</p>
+                </div>
+            `;
+        } else if (storeProfile.status === "deleted") {
+            banner.classList.remove("hidden");
+            banner.style.backgroundColor = "rgba(239, 68, 68, 0.15)";
+            banner.style.borderColor = "rgba(239, 68, 68, 0.3)";
+            banner.style.color = "#f87171";
+            banner.innerHTML = `
+                <i data-lucide="trash-2" style="margin-top: 0.1rem; flex-shrink: 0;"></i>
+                <div>
+                    <h5 style="font-weight: 700; font-size: 0.95rem;">Tienda Desactivada / Eliminada</h5>
+                    <p style="font-size: 0.85rem; opacity: 0.9; margin-top: 0.2rem;">Tu tienda oficial ha sido eliminada o desactivada por la administración y ya no está expuesta al público.</p>
+                    <p style="font-size: 0.85rem; margin-top: 0.4rem; font-weight: 600; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 6px;">Motivo: ${storeProfile.status_reason || 'No especificado.'}</p>
+                </div>
+            `;
+        }
+        
+        if (window.lucide) lucide.createIcons();
+        
         // Load Catalog & Edit Profile Forms
         loadDashboardCatalog();
         loadDashboardProfileForm(storeProfile);
@@ -1105,8 +1177,10 @@ async function handleLoginSubmit(e) {
         updateAuthNavbar();
         closeModal("auth-modal");
         
-        // Redirect to dashboard if owner
-        if (data.user.is_store_owner) {
+        // Redirect to dashboard if owner, admin or buyer
+        if (data.user.is_admin) {
+            window.location.hash = "#admin";
+        } else if (data.user.is_store_owner) {
             window.location.hash = "#dashboard";
         } else {
             window.location.hash = "#search";
@@ -1154,5 +1228,296 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.add("hidden");
+    }
+}
+
+// ==========================================================================
+// VIEW 10.5: ADMINISTRATIVE DASHBOARD CONTROLLER
+// ==========================================================================
+let adminActiveFilter = "all";
+let adminStores = [];
+
+async function loadAdminDashboard() {
+    setupAdminListeners();
+    
+    const tableBody = document.getElementById("admin-stores-table-body");
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem;"><i data-lucide="loader" class="animate-spin" style="margin:0 auto;"></i> Cargando tiendas...</td></tr>`;
+    if (window.lucide) lucide.createIcons();
+    
+    try {
+        const stores = await api.adminGetStores();
+        adminStores = stores;
+        
+        // Update stats
+        const pending = stores.filter(s => s.status === "pending").length;
+        const approved = stores.filter(s => s.status === "approved").length;
+        const rejected = stores.filter(s => s.status === "rejected").length;
+        const deleted = stores.filter(s => s.status === "deleted").length;
+        
+        document.getElementById("admin-stat-pending").textContent = pending;
+        document.getElementById("admin-stat-approved").textContent = approved;
+        document.getElementById("admin-stat-rejected").textContent = rejected;
+        document.getElementById("admin-stat-deleted").textContent = deleted;
+        document.getElementById("admin-badge-pending-count").textContent = pending;
+        
+        renderAdminStoresTable();
+        
+    } catch (err) {
+        showToast("Error al cargar panel de administración: " + err.message, "error");
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:hsl(var(--danger));">Error: ${err.message}</td></tr>`;
+    }
+}
+
+function renderAdminStoresTable() {
+    const tableBody = document.getElementById("admin-stores-table-body");
+    
+    let filtered = adminStores;
+    if (adminActiveFilter !== "all") {
+        filtered = adminStores.filter(s => s.status === adminActiveFilter);
+    }
+    
+    if (filtered.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:3rem; color:hsl(var(--text-muted));">No hay tiendas en esta lista.</td></tr>`;
+        return;
+    }
+    
+    tableBody.innerHTML = filtered.map(store => {
+        let statusBadge = "";
+        if (store.status === "pending") statusBadge = `<span class="badge badge-warning">Pendiente</span>`;
+        else if (store.status === "approved") statusBadge = `<span class="badge badge-success">Aprobada</span>`;
+        else if (store.status === "rejected") statusBadge = `<span class="badge badge-outline" style="color:#fbbf24; border-color:#fbbf24; background:none;">Rechazada</span>`;
+        else if (store.status === "deleted") statusBadge = `<span class="badge badge-outline" style="color:#ef4444; border-color:#ef4444; background:none;">Eliminada</span>`;
+        
+        let actionButtons = `
+            <button class="btn btn-outline btn-sm admin-detail-btn" data-id="${store.id}" style="padding:0.25rem 0.5rem; font-size:0.75rem;">Detalle</button>
+        `;
+        
+        if (store.status === "pending") {
+            actionButtons += `
+                <button class="btn btn-primary btn-sm admin-approve-btn" data-id="${store.id}" style="padding:0.25rem 0.5rem; font-size:0.75rem; background:linear-gradient(135deg, #10b981, #059669); box-shadow:none;">Aprobar</button>
+                <button class="btn btn-danger btn-sm admin-reject-btn" data-id="${store.id}" style="padding:0.25rem 0.5rem; font-size:0.75rem;">Rechazar</button>
+            `;
+        } else if (store.status === "approved") {
+            actionButtons += `
+                <button class="btn btn-danger btn-sm admin-delete-btn" data-id="${store.id}" style="padding:0.25rem 0.5rem; font-size:0.75rem;">Eliminar</button>
+            `;
+        }
+        
+        return `
+            <tr>
+                <td>
+                    <img src="${store.logo_url || '/uploads/default_logo.png'}" class="table-img" onerror="this.src='/uploads/default_logo.png'">
+                </td>
+                <td style="font-weight:600; color:white;">${store.name}</td>
+                <td>
+                    <div style="font-size:0.9rem; font-weight:500; color:white;">${store.owner_name}</div>
+                    <div style="font-size:0.75rem; color:hsl(var(--text-muted));">${store.owner_email}</div>
+                </td>
+                <td>${store.phone || '-'}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div class="action-buttons" style="gap:0.4rem;">
+                        ${actionButtons}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join("");
+    
+    if (window.lucide) lucide.createIcons();
+    
+    // Bind buttons
+    document.querySelectorAll(".admin-detail-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const id = parseInt(e.currentTarget.dataset.id);
+            openAdminDetailModal(id);
+        });
+    });
+    
+    document.querySelectorAll(".admin-approve-btn").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+            const id = parseInt(e.currentTarget.dataset.id);
+            await handleAdminApproveStore(id);
+        });
+    });
+    
+    document.querySelectorAll(".admin-reject-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const id = parseInt(e.currentTarget.dataset.id);
+            openAdminActionModal(id, "reject");
+        });
+    });
+    
+    document.querySelectorAll(".admin-delete-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const id = parseInt(e.currentTarget.dataset.id);
+            openAdminActionModal(id, "delete");
+        });
+    });
+}
+
+function setupAdminListeners() {
+    // Tab filters
+    document.querySelectorAll(".admin-filter-btn").forEach(btn => {
+        btn.replaceWith(btn.cloneNode(true));
+    });
+    
+    document.querySelectorAll(".admin-filter-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            document.querySelectorAll(".admin-filter-btn").forEach(b => b.classList.remove("active"));
+            e.currentTarget.classList.add("active");
+            adminActiveFilter = e.currentTarget.dataset.status;
+            renderAdminStoresTable();
+        });
+    });
+    
+    // Close modal detail buttons
+    document.getElementById("btn-close-admin-detail-modal").onclick = () => closeModal("admin-store-detail-modal");
+    document.getElementById("btn-close-admin-detail-modal-footer").onclick = () => closeModal("admin-store-detail-modal");
+    
+    // Close modal action buttons
+    document.getElementById("btn-close-admin-action-modal").onclick = () => closeModal("admin-action-modal");
+    document.getElementById("btn-cancel-admin-action").onclick = () => closeModal("admin-action-modal");
+    
+    // Admin action form submit
+    const form = document.getElementById("admin-action-form");
+    form.replaceWith(form.cloneNode(true));
+    document.getElementById("admin-action-form").addEventListener("submit", handleAdminActionSubmit);
+}
+
+function openAdminDetailModal(storeId) {
+    const store = adminStores.find(s => s.id === storeId);
+    if (!store) return;
+    
+    document.getElementById("admin-detail-logo").src = store.logo_url || "/uploads/default_logo.png";
+    document.getElementById("admin-detail-name").textContent = store.name;
+    document.getElementById("admin-detail-owner").textContent = store.owner_name;
+    document.getElementById("admin-detail-email").textContent = store.owner_email;
+    document.getElementById("admin-detail-address").textContent = store.address || "No especificada";
+    document.getElementById("admin-detail-phone").textContent = store.phone || "No especificado";
+    document.getElementById("admin-detail-description").textContent = store.description || "Sin descripción.";
+    
+    // Badge status
+    const statusBadge = document.getElementById("admin-detail-status-badge");
+    statusBadge.className = "badge";
+    if (store.status === "pending") {
+        statusBadge.classList.add("badge-warning");
+        statusBadge.textContent = "Pendiente";
+    } else if (store.status === "approved") {
+        statusBadge.classList.add("badge-success");
+        statusBadge.textContent = "Aprobada";
+    } else if (store.status === "rejected") {
+        statusBadge.classList.add("badge-outline");
+        statusBadge.textContent = "Rechazada";
+    } else if (store.status === "deleted") {
+        statusBadge.classList.add("badge-outline");
+        statusBadge.textContent = "Eliminada";
+    }
+    
+    // Links list
+    const linksDiv = document.getElementById("admin-detail-links");
+    linksDiv.innerHTML = "";
+    if (store.website_url) {
+        linksDiv.innerHTML += `<a href="${store.website_url}" target="_blank" class="btn btn-outline btn-sm" style="padding:0.2rem 0.5rem; font-size:0.75rem;"><i data-lucide="globe" style="width:12px; height:12px;"></i> Web</a>`;
+    }
+    if (store.instagram_url) {
+        linksDiv.innerHTML += `<a href="${store.instagram_url}" target="_blank" class="btn btn-outline btn-sm" style="padding:0.2rem 0.5rem; font-size:0.75rem;"><i data-lucide="instagram" style="width:12px; height:12px;"></i> Instagram</a>`;
+    }
+    if (store.facebook_url) {
+        linksDiv.innerHTML += `<a href="${store.facebook_url}" target="_blank" class="btn btn-outline btn-sm" style="padding:0.2rem 0.5rem; font-size:0.75rem;"><i data-lucide="facebook" style="width:12px; height:12px;"></i> Facebook</a>`;
+    }
+    if (store.twitter_url) {
+        linksDiv.innerHTML += `<a href="${store.twitter_url}" target="_blank" class="btn btn-outline btn-sm" style="padding:0.2rem 0.5rem; font-size:0.75rem;"><i data-lucide="twitter" style="width:12px; height:12px;"></i> Twitter</a>`;
+    }
+    if (!linksDiv.innerHTML) {
+        linksDiv.innerHTML = `<span style="font-size:0.85rem; color:hsl(var(--text-muted));">Sin enlaces oficiales.</span>`;
+    }
+    
+    // Status reason container
+    const reasonContainer = document.getElementById("admin-detail-reason-container");
+    if (store.status === "rejected" || store.status === "deleted") {
+        reasonContainer.classList.remove("hidden");
+        document.getElementById("admin-detail-status-reason").textContent = store.status_reason || "No se especificó motivo.";
+    } else {
+        reasonContainer.classList.add("hidden");
+    }
+    
+    if (window.lucide) lucide.createIcons();
+    document.getElementById("admin-store-detail-modal").classList.remove("hidden");
+}
+
+async function handleAdminApproveStore(storeId) {
+    if (!confirm("¿Está seguro de que desea aprobar esta solicitud de registro de comercio oficial?")) {
+        return;
+    }
+    try {
+        await api.adminApproveStore(storeId);
+        showToast("Comercio oficial aprobado con éxito.");
+        loadAdminDashboard();
+    } catch (err) {
+        showToast("Error al aprobar comercio: " + err.message, "error");
+    }
+}
+
+function openAdminActionModal(storeId, actionType) {
+    document.getElementById("admin-action-store-id").value = storeId;
+    document.getElementById("admin-action-type").value = actionType;
+    document.getElementById("admin-action-reason").value = "";
+    
+    const title = document.getElementById("admin-action-title");
+    const label = document.getElementById("admin-action-label");
+    const submitBtn = document.getElementById("btn-submit-admin-action");
+    
+    if (actionType === "reject") {
+        title.textContent = "Rechazar Solicitud de Tienda";
+        label.textContent = "Especifique el motivo de rechazo *";
+        submitBtn.className = "btn btn-danger";
+        submitBtn.textContent = "Confirmar Rechazo";
+    } else {
+        title.textContent = "Eliminar / Desactivar Tienda";
+        label.textContent = "Especifique el motivo de eliminación/desactivación *";
+        submitBtn.className = "btn btn-danger";
+        submitBtn.textContent = "Confirmar Eliminación";
+    }
+    
+    document.getElementById("admin-action-modal").classList.remove("hidden");
+}
+
+async function handleAdminActionSubmit(e) {
+    e.preventDefault();
+    const storeId = parseInt(document.getElementById("admin-action-store-id").value);
+    const actionType = document.getElementById("admin-action-type").value;
+    const reason = document.getElementById("admin-action-reason").value.trim();
+    
+    if (!reason) {
+        showToast("El motivo es obligatorio.", "error");
+        return;
+    }
+    
+    const submitBtn = document.getElementById("btn-submit-admin-action");
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i data-lucide="loader" class="animate-spin"></i> Procesando...`;
+    if (window.lucide) lucide.createIcons();
+    
+    try {
+        if (actionType === "reject") {
+            await api.adminRejectStore(storeId, reason);
+            showToast("La solicitud de registro ha sido rechazada.");
+        } else {
+            await api.adminDeleteStore(storeId, reason);
+            showToast("La tienda ha sido inactivada/eliminada.");
+        }
+        closeModal("admin-action-modal");
+        loadAdminDashboard();
+    } catch (err) {
+        showToast("Error: " + err.message, "error");
+    } finally {
+        submitBtn.disabled = false;
+        if (actionType === "reject") {
+            submitBtn.textContent = "Confirmar Rechazo";
+        } else {
+            submitBtn.textContent = "Confirmar Eliminación";
+        }
+        if (window.lucide) lucide.createIcons();
     }
 }

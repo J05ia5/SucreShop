@@ -17,16 +17,22 @@ def seed_db():
     db = SessionLocal()
     
     try:
-        # 1. CREATE USERS (STORE OWNERS)
+        # 1. CREATE USERS (STORE OWNERS & ADMIN)
         password_hash = auth.get_password_hash("sucreshop2026")
+        admin_password_hash = auth.get_password_hash("jdksucreshop86642")
         
         users_data = [
-            {"email": "gearbox@shop.com", "full_name": "Marcos GearBox", "is_store_owner": True},
-            {"email": "stylelab@shop.com", "full_name": "Valeria StyleLab", "is_store_owner": True},
-            {"email": "choco@shop.com", "full_name": "Juan ChocoDelight", "is_store_owner": True},
-            {"email": "ecohome@shop.com", "full_name": "Ana EcoHome", "is_store_owner": True},
-            {"email": "fitzone@shop.com", "full_name": "Carlos FitZone", "is_store_owner": True},
-            {"email": "cliente@user.com", "full_name": "José Comprador", "is_store_owner": False}, # Common customer
+            {"email": "admin@sucreshop.com", "full_name": "Administrador SucreShop", "is_store_owner": False, "is_admin": True, "password_hash": admin_password_hash},
+            {"email": "gearbox@shop.com", "full_name": "Marcos GearBox", "is_store_owner": True, "is_admin": False, "password_hash": password_hash},
+            {"email": "stylelab@shop.com", "full_name": "Valeria StyleLab", "is_store_owner": True, "is_admin": False, "password_hash": password_hash},
+            {"email": "choco@shop.com", "full_name": "Juan ChocoDelight", "is_store_owner": True, "is_admin": False, "password_hash": password_hash},
+            {"email": "ecohome@shop.com", "full_name": "Ana EcoHome", "is_store_owner": True, "is_admin": False, "password_hash": password_hash},
+            {"email": "fitzone@shop.com", "full_name": "Carlos FitZone", "is_store_owner": True, "is_admin": False, "password_hash": password_hash},
+            {"email": "cliente@user.com", "full_name": "José Comprador", "is_store_owner": False, "is_admin": False, "password_hash": password_hash},
+            # Pending and rejected stores owners
+            {"email": "chapaco@shop.com", "full_name": "Luis Sabor Chapaco", "is_store_owner": True, "is_admin": False, "password_hash": password_hash},
+            {"email": "pixel@shop.com", "full_name": "Sofia Pixel Art", "is_store_owner": True, "is_admin": False, "password_hash": password_hash},
+            {"email": "sushi@shop.com", "full_name": "Kenji SushiSucre", "is_store_owner": True, "is_admin": False, "password_hash": password_hash},
         ]
         
         db_users = {}
@@ -34,8 +40,9 @@ def seed_db():
             user = models.User(
                 email=u["email"],
                 full_name=u["full_name"],
-                hashed_password=password_hash,
-                is_store_owner=u["is_store_owner"]
+                hashed_password=u["password_hash"],
+                is_store_owner=u["is_store_owner"],
+                is_admin=u["is_admin"]
             )
             db.add(user)
             db.flush() # Populate user.id
@@ -55,6 +62,7 @@ def seed_db():
                 "website_url": "https://gearbox.com",
                 "instagram_url": "https://instagram.com/gearbox_tech",
                 "facebook_url": "https://facebook.com/gearbox_tech",
+                "status": "approved",
             },
             {
                 "owner_id": db_users["stylelab@shop.com"].id,
@@ -64,6 +72,7 @@ def seed_db():
                 "address": "Calle Bolívar #450, Sucre",
                 "phone": "+591 7 8901234",
                 "instagram_url": "https://instagram.com/stylelab_bo",
+                "status": "approved",
             },
             {
                 "owner_id": db_users["choco@shop.com"].id,
@@ -74,6 +83,7 @@ def seed_db():
                 "phone": "+591 4 6423456",
                 "website_url": "https://chocodelight.shop",
                 "instagram_url": "https://instagram.com/chocodelight",
+                "status": "approved",
             },
             {
                 "owner_id": db_users["ecohome@shop.com"].id,
@@ -83,6 +93,7 @@ def seed_db():
                 "address": "Calle Destacamento 111 #78, Sucre",
                 "phone": "+591 7 1234567",
                 "facebook_url": "https://facebook.com/ecohome_sucre",
+                "status": "approved",
             },
             {
                 "owner_id": db_users["fitzone@shop.com"].id,
@@ -92,6 +103,35 @@ def seed_db():
                 "address": "Av. del Maestro #200, Sucre",
                 "phone": "+591 7 5556677",
                 "instagram_url": "https://instagram.com/fitzone_sucre",
+                "status": "approved",
+            },
+            {
+                "owner_id": db_users["chapaco@shop.com"].id,
+                "name": "Sabor Chapaco",
+                "logo_url": "/uploads/default_logo.png",
+                "description": "Comida típica tarijeña, vinos artesanales y empanadas blanqueadas traídas directamente del sur.",
+                "address": "Calle Calvo #220, Sucre",
+                "phone": "+591 7 4443322",
+                "status": "pending",
+            },
+            {
+                "owner_id": db_users["pixel@shop.com"].id,
+                "name": "Pixel Art Studio",
+                "logo_url": "/uploads/default_logo.png",
+                "description": "Cuadros pixelados, stickers de resina personalizados y arte geek para decorar tu setup.",
+                "address": "Av. Hernando Siles #560, Sucre",
+                "phone": "+591 7 1112233",
+                "status": "rejected",
+                "status_reason": "Falta subir el certificado de sanidad local o registro de comercio oficial.",
+            },
+            {
+                "owner_id": db_users["sushi@shop.com"].id,
+                "name": "SushiSucre",
+                "logo_url": "/uploads/default_logo.png",
+                "description": "Delicioso sushi tradicional y fusión con toques locales de ají sucrense. Calidad premium.",
+                "address": "Calle España #110, Sucre",
+                "phone": "+591 4 6438899",
+                "status": "pending",
             }
         ]
         

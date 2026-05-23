@@ -74,3 +74,11 @@ def get_current_store(current_user: models.User = Depends(get_current_user), db:
             detail="No se encontró una tienda asociada a este usuario"
         )
     return store
+
+def get_current_admin(current_user: models.User = Depends(get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso denegado. Se requieren permisos de administrador."
+        )
+    return current_user

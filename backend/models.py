@@ -9,6 +9,7 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, nullable=False)
     is_store_owner = Column(Boolean, default=False)
+    is_admin = Column(Boolean, default=False)
     
     # Relationships
     stores = relationship("Store", back_populates="owner")
@@ -26,6 +27,8 @@ class Store(Base):
     instagram_url = Column(String, nullable=True)
     facebook_url = Column(String, nullable=True)
     twitter_url = Column(String, nullable=True)
+    status = Column(String, default="pending")
+    status_reason = Column(String, nullable=True)
     
     # Relationships
     owner = relationship("User", back_populates="stores")

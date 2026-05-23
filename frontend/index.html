@@ -349,6 +349,11 @@
                 <!-- Dashboard Content Area -->
                 <div class="dashboard-main-content">
                     
+                    <!-- Store Status Banner -->
+                    <div id="store-status-banner" class="hidden" style="margin-bottom: 2rem; padding: 1.2rem; border-radius: var(--radius-md); display: flex; align-items: flex-start; gap: 0.8rem; border: 1px solid transparent;">
+                        <!-- Dynamic Status -->
+                    </div>
+                    
                     <!-- TAB 1: CATALOG MANAGEMENT -->
                     <div id="tab-catalog" class="dash-tab-content">
                         <div class="tab-header">
@@ -452,6 +457,176 @@
                 </div>
             </div>
         </section>
+        
+        <!-- 4.5 ADMIN DASHBOARD VIEW -->
+        <section id="view-admin-dashboard" class="view-container hidden">
+            <div class="dashboard-layout">
+                <!-- Admin Sidebar Navigation -->
+                <aside class="dashboard-sidebar glass-card">
+                    <div class="dashboard-user-profile">
+                        <div class="admin-avatar-wrapper" style="width:60px; height:60px; background:rgba(124, 58, 237, 0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0.5rem auto 1rem auto;">
+                            <i data-lucide="shield-check" style="color: hsl(var(--primary-light)); width: 32px; height: 32px;"></i>
+                        </div>
+                        <h4>Panel Admin</h4>
+                        <p style="color:hsl(var(--text-muted)); font-size:0.85rem;">Administrador</p>
+                    </div>
+                    <div class="dashboard-menu">
+                        <button class="dash-menu-item active" id="admin-menu-stores">
+                            <i data-lucide="store"></i> Solicitudes y Tiendas
+                        </button>
+                    </div>
+                </aside>
+
+                <!-- Admin Content Area -->
+                <div class="dashboard-main-content">
+                    <div class="tab-header" style="margin-bottom: 2rem;">
+                        <div>
+                            <h2>Control de Comercios Oficiales</h2>
+                            <p>Aprueba solicitudes de registro, rechaza comercios o inactiva cuentas existentes.</p>
+                        </div>
+                    </div>
+
+                    <!-- Admin Statistics Cards -->
+                    <div class="stats-grid-sm" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                        <div class="stat-card-sm glass-card" style="padding: 1rem; display: flex; align-items: center; gap: 0.8rem;">
+                            <div class="stat-icon-wrapper-sm color-purple" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(168, 85, 247, 0.15); color: #c084fc;"><i data-lucide="clock" style="width: 20px; height: 20px;"></i></div>
+                            <div>
+                                <h4 class="stat-number-sm" id="admin-stat-pending" style="font-size: 1.2rem; font-weight: 700;">0</h4>
+                                <p class="stat-label-sm" style="font-size: 0.75rem; color: hsl(var(--text-muted));">Pendientes</p>
+                            </div>
+                        </div>
+                        <div class="stat-card-sm glass-card" style="padding: 1rem; display: flex; align-items: center; gap: 0.8rem;">
+                            <div class="stat-icon-wrapper-sm color-green" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: #34d399;"><i data-lucide="check-circle" style="width: 20px; height: 20px;"></i></div>
+                            <div>
+                                <h4 class="stat-number-sm" id="admin-stat-approved" style="font-size: 1.2rem; font-weight: 700;">0</h4>
+                                <p class="stat-label-sm" style="font-size: 0.75rem; color: hsl(var(--text-muted));">Aprobadas</p>
+                            </div>
+                        </div>
+                        <div class="stat-card-sm glass-card" style="padding: 1rem; display: flex; align-items: center; gap: 0.8rem;">
+                            <div class="stat-icon-wrapper-sm color-blue" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(245, 158, 11, 0.15); color: #fbbf24;"><i data-lucide="x-circle" style="width: 20px; height: 20px;"></i></div>
+                            <div>
+                                <h4 class="stat-number-sm" id="admin-stat-rejected" style="font-size: 1.2rem; font-weight: 700;">0</h4>
+                                <p class="stat-label-sm" style="font-size: 0.75rem; color: hsl(var(--text-muted));">Rechazadas</p>
+                            </div>
+                        </div>
+                        <div class="stat-card-sm glass-card" style="padding: 1rem; display: flex; align-items: center; gap: 0.8rem;">
+                            <div class="stat-icon-wrapper-sm" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(239, 68, 68, 0.15); color: #ef4444;"><i data-lucide="trash-2" style="width: 20px; height: 20px;"></i></div>
+                            <div>
+                                <h4 class="stat-number-sm" id="admin-stat-deleted" style="font-size: 1.2rem; font-weight: 700;">0</h4>
+                                <p class="stat-label-sm" style="font-size: 0.75rem; color: hsl(var(--text-muted));">Eliminadas</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Store Filters Tab bar -->
+                    <div class="admin-filters-tabs" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid hsla(var(--border-color)); padding-bottom: 0.5rem;">
+                        <button class="auth-tab-btn active admin-filter-btn" data-status="all" style="padding: 0.4rem 1rem; font-size: 0.9rem;">Todas</button>
+                        <button class="auth-tab-btn admin-filter-btn" data-status="pending" style="padding: 0.4rem 1rem; font-size: 0.9rem;">Pendientes <span class="badge badge-warning" id="admin-badge-pending-count" style="font-size: 0.6rem; padding: 0.1rem 0.4rem; margin-left: 0.2rem;">0</span></button>
+                        <button class="auth-tab-btn admin-filter-btn" data-status="approved" style="padding: 0.4rem 1rem; font-size: 0.9rem;">Aprobadas</button>
+                        <button class="auth-tab-btn admin-filter-btn" data-status="rejected" style="padding: 0.4rem 1rem; font-size: 0.9rem;">Rechazadas</button>
+                        <button class="auth-tab-btn admin-filter-btn" data-status="deleted" style="padding: 0.4rem 1rem; font-size: 0.9rem;">Eliminadas</button>
+                    </div>
+
+                    <!-- Stores Administration Table -->
+                    <div class="catalog-table-wrapper glass-card">
+                        <table class="catalog-table">
+                            <thead>
+                                <tr>
+                                    <th>Logo</th>
+                                    <th>Nombre Comercial</th>
+                                    <th>Dueño</th>
+                                    <th>Teléfono</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-stores-table-body">
+                                <!-- Dynamic store rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN VIEW STORE DETAIL MODAL -->
+        <div id="admin-store-detail-modal" class="modal-overlay hidden">
+            <div class="modal-box glass-card" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3>Detalle de la Tienda</h3>
+                    <button class="btn-close-modal" id="btn-close-admin-detail-modal">&times;</button>
+                </div>
+                <div class="store-detail-modal-body" style="padding: 1rem 0; color: hsl(var(--text-primary)); display: flex; flex-direction: column; gap: 1.2rem;">
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <img id="admin-detail-logo" src="/uploads/default_logo.png" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); object-fit: cover;">
+                        <div>
+                            <h4 id="admin-detail-name" style="font-size: 1.4rem; font-weight: 700; font-family: var(--font-heading);">Nombre de Tienda</h4>
+                            <span class="badge" id="admin-detail-status-badge">Pendiente</span>
+                        </div>
+                    </div>
+                    <div>
+                        <strong style="color: hsl(var(--text-muted)); font-size: 0.8rem; text-transform: uppercase;">Descripción:</strong>
+                        <p id="admin-detail-description" style="margin-top: 0.3rem; line-height: 1.4; font-size: 0.95rem;">...</p>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <strong style="color: hsl(var(--text-muted)); font-size: 0.8rem; text-transform: uppercase;">Dueño Comercial:</strong>
+                            <p id="admin-detail-owner" style="margin-top: 0.2rem; font-size: 0.9rem;">...</p>
+                        </div>
+                        <div>
+                            <strong style="color: hsl(var(--text-muted)); font-size: 0.8rem; text-transform: uppercase;">Correo de Contacto:</strong>
+                            <p id="admin-detail-email" style="margin-top: 0.2rem; font-size: 0.9rem;">...</p>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <strong style="color: hsl(var(--text-muted)); font-size: 0.8rem; text-transform: uppercase;">Dirección Física:</strong>
+                            <p id="admin-detail-address" style="margin-top: 0.2rem; font-size: 0.9rem;">...</p>
+                        </div>
+                        <div>
+                            <strong style="color: hsl(var(--text-muted)); font-size: 0.8rem; text-transform: uppercase;">WhatsApp / Teléfono:</strong>
+                            <p id="admin-detail-phone" style="margin-top: 0.2rem; font-size: 0.9rem;">...</p>
+                        </div>
+                    </div>
+                    <div>
+                        <strong style="color: hsl(var(--text-muted)); font-size: 0.8rem; text-transform: uppercase;">Sitio Web y Redes:</strong>
+                        <div id="admin-detail-links" style="margin-top: 0.3rem; font-size: 0.9rem; display: flex; gap: 0.8rem; flex-wrap: wrap;">...</div>
+                    </div>
+                    <div id="admin-detail-reason-container" class="hidden" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.8rem; border-radius: 8px;">
+                        <strong style="color: #f87171; font-size: 0.8rem; text-transform: uppercase;">Motivo de Rechazo o Eliminación:</strong>
+                        <p id="admin-detail-status-reason" style="margin-top: 0.3rem; font-size: 0.9rem; color: #fecaca; line-height: 1.4;">...</p>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: flex-end;">
+                    <button type="button" class="btn btn-outline" id="btn-close-admin-detail-modal-footer">Cerrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN ACTION MODAL (REJECT OR DELETE REASON) -->
+        <div id="admin-action-modal" class="modal-overlay hidden">
+            <div class="modal-box glass-card" style="max-width: 480px;">
+                <div class="modal-header">
+                    <h3 id="admin-action-title">Motivo Requerido</h3>
+                    <button class="btn-close-modal" id="btn-close-admin-action-modal">&times;</button>
+                </div>
+                <form id="admin-action-form">
+                    <input type="hidden" id="admin-action-store-id">
+                    <input type="hidden" id="admin-action-type"> <!-- 'reject' or 'delete' -->
+                    
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="admin-action-reason" id="admin-action-label" style="font-weight: 600; color: white;">Especifique el motivo de esta acción *</label>
+                        <textarea id="admin-action-reason" rows="3" required placeholder="Escriba detalladamente el motivo..." style="width: 100%; margin-top: 0.5rem;"></textarea>
+                        <span class="file-help" style="color: #f87171; display: block; margin-top: 0.4rem;">Este motivo es obligatorio y será visible para el propietario del comercio.</span>
+                    </div>
+
+                    <div class="modal-footer" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.8rem;">
+                        <button type="button" class="btn btn-outline" id="btn-cancel-admin-action">Cancelar</button>
+                        <button type="submit" class="btn btn-danger" id="btn-submit-admin-action">Confirmar Acción</button>
+                    </div>
+                </form>
+            </div>
+        </div>
         
         <!-- 5. PRODUCT EDITOR MODAL (DASHBOARD) -->
         <div id="product-editor-modal" class="modal-overlay hidden">
