@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SucreShop - Central de Tiendas Locales</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Background Blob Elements (Mesh Gradients) -->
+    <div class="blob-bg-1"></div>
+    <div class="blob-bg-2"></div>
+
+    <!-- Navigation Header -->
+    <header class="main-header">
+        <div class="header-container">
+            <a href="#landing" class="logo" id="nav-logo">
+                <span class="logo-accent">Sucre</span>Shop
+            </a>
+            
+            <nav class="nav-links" id="main-nav">
+                <a href="#landing" class="nav-item active" data-view="landing">Inicio</a>
+                <a href="#search" class="nav-item" data-view="search">Explorar</a>
+                <a href="#stores" class="nav-item" id="nav-stores-list">Tiendas</a>
+            </nav>
+
+            <div class="auth-buttons" id="auth-nav-container">
+                <!-- Dynamic via JS -->
+                <button class="btn btn-outline" id="btn-nav-login">Iniciar Sesión</button>
+                <button class="btn btn-primary" id="btn-nav-register">Registrar Negocio</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- MAIN APP WRAPPER -->
+    <main class="app-wrapper">
+
+        <!-- 1. LANDING PAGE VIEW -->
+        <section id="view-landing" class="view-container">
+            <!-- Hero Section -->
+            <div class="hero">
+                <div class="hero-content">
+                    <span class="badge">Comercio Local Centralizado</span>
+                    <h1 class="hero-title">Todo el comercio de tu ciudad en un solo lugar</h1>
+                    <p class="hero-subtitle">Descubre tiendas oficiales, explora sus catálogos y busca productos de forma inteligente con nuestro asistente de IA local.</p>
+                    
+                    <div class="hero-ctas">
+                        <button class="btn btn-primary btn-lg" id="hero-btn-explore">
+                            <i data-lucide="compass"></i> Descubrir Tiendas
+                        </button>
+                        <button class="btn btn-secondary btn-lg" id="hero-btn-register-store">
+                            <i data-lucide="store"></i> Registrar mi Negocio
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Interactive AI Search Preview card -->
+                <div class="hero-preview">
+                    <div class="glass-card ai-preview-card">
+                        <div class="card-header-status">
+                            <div class="pulse-indicator"></div>
+                            <span class="status-text">Búsqueda Inteligente Demo</span>
+                        </div>
+                        <h3>Prueba el buscador con IA</h3>
+                        <p class="helper-text">Escribe algo natural y observa cómo la IA extrae tus intenciones de búsqueda al instante.</p>
+                        
+                        <div class="interactive-search-box">
+                            <input type="text" id="ai-demo-input" placeholder="Ej: zapatillas nike rojas en stock talla 42..." autocomplete="off">
+                            <button id="ai-demo-submit" class="btn btn-primary btn-icon">
+                                <i data-lucide="sparkles"></i>
+                            </button>
+                        </div>
+
+                        <!-- Real-time parsing results visualization -->
+                        <div class="ai-parsing-viz" id="ai-demo-viz">
+                            <div class="viz-placeholder">Ingresa una consulta para ver el análisis de la IA...</div>
+                            <div class="viz-results hidden">
+                                <div class="viz-item"><span class="viz-label">Categoría:</span> <span class="viz-value" id="viz-cat">-</span></div>
+                                <div class="viz-item"><span class="viz-label">Marca:</span> <span class="viz-value" id="viz-brand">-</span></div>
+                                <div class="viz-item"><span class="viz-label">Filtros:</span> <span class="viz-value" id="viz-filters">-</span></div>
+                                <div class="viz-explanation" id="viz-explain">-</div>
+                                <button class="btn btn-outline btn-sm btn-block" id="viz-search-btn">Buscar este producto real</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Módulo -->
+            <div class="stats-grid">
+                <div class="stat-card glass-card">
+                    <div class="stat-icon-wrapper color-purple">
+                        <i data-lucide="store"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4 class="stat-number" id="stat-stores">+5 Tiendas</h4>
+                        <p class="stat-label">Comercios Oficiales</p>
+                    </div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon-wrapper color-blue">
+                        <i data-lucide="shopping-bag"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4 class="stat-number" id="stat-products">+15 Productos</h4>
+                        <p class="stat-label">En Catálogo Activo</p>
+                    </div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon-wrapper color-green">
+                        <i data-lucide="sparkles"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4 class="stat-number">IA Integrada</h4>
+                        <p class="stat-label">Comprensión de Búsqueda</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured Shops Section -->
+            <div class="section-container">
+                <div class="section-header">
+                    <h2>Descubre Tiendas Oficiales</h2>
+                    <p>Visita los perfiles de los comercios verificados y explora sus catálogos oficiales.</p>
+                </div>
+                <div class="stores-grid" id="landing-stores-grid">
+                    <!-- Loaded dynamically via JS -->
+                    <div class="skeleton-loader"></div>
+                </div>
+            </div>
+
+            <!-- Benefits for Businesses Section -->
+            <div class="benefits-banner glass-card">
+                <div class="benefits-text">
+                    <h2>¿Tienes un negocio o tienda oficial?</h2>
+                    <p>Únete a SucreShop para digitalizar tu catálogo, centralizar tus ventas locales, enlazar tus redes sociales y conectar directamente con miles de compradores en tu ciudad sin intermediarios.</p>
+                    <ul class="benefits-list">
+                        <li><i data-lucide="check-circle" class="icon-green"></i> Espacio virtual propio y personalizado</li>
+                        <li><i data-lucide="check-circle" class="icon-green"></i> Carga rápida de catálogo e imágenes de productos</li>
+                        <li><i data-lucide="check-circle" class="icon-green"></i> Estadísticas y control de precios/stock en tiempo real</li>
+                        <li><i data-lucide="check-circle" class="icon-green"></i> Enlaces directos a tus redes y WhatsApp</li>
+                    </ul>
+                    <button class="btn btn-primary btn-lg" id="benefits-register-btn">Registrar mi Tienda Gratis</button>
+                </div>
+                <div class="benefits-illustration">
+                    <!-- Icon or simple aesthetic UI -->
+                    <i data-lucide="trending-up" class="giant-icon"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. SEARCH & EXPLORE VIEW -->
+        <section id="view-search" class="view-container hidden">
+            <div class="search-page-layout">
+                
+                <!-- Main Search Area -->
+                <div class="search-main-content">
+                    <div class="search-bar-wrapper glass-card">
+                        <div class="search-input-container">
+                            <i data-lucide="sparkles" class="ai-spark-icon animate-pulse"></i>
+                            <input type="text" id="search-input" placeholder="Dime qué buscas (Ej: 'computadora barata de 16gb de ram' o 'zapatos rojos en stock')...">
+                            <button id="btn-search-submit" class="btn btn-primary">
+                                <i data-lucide="search"></i> Buscar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- AI Insights Display -->
+                    <div id="ai-insights-panel" class="ai-insights-container glass-card hidden">
+                        <div class="ai-insights-header">
+                            <div class="ai-header-title">
+                                <i data-lucide="brain-circuit" class="ai-icon"></i>
+                                <h4>Análisis de Intención por IA</h4>
+                            </div>
+                            <span class="badge badge-purple" id="ai-badge-status">Interpretado con éxito</span>
+                        </div>
+                        <p class="ai-explanation-text" id="ai-explanation-content">
+                            Entendí que buscas un producto de la categoría...
+                        </p>
+                        <div class="ai-extracted-tags" id="ai-tags-container">
+                            <!-- JS will inject dynamic filter tags detected -->
+                        </div>
+                    </div>
+
+                    <!-- Products Grid Results -->
+                    <div class="results-header">
+                        <h3 id="results-count-text">Todos los Productos</h3>
+                        <div class="sorting-controls">
+                            <label for="sort-select">Ordenar por:</label>
+                            <select id="sort-select">
+                                <option value="relevance">Relevancia / IA</option>
+                                <option value="price_asc">Menor precio</option>
+                                <option value="price_desc">Mayor precio</option>
+                                <option value="stock_desc">Mayor disponibilidad</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="products-grid" id="search-products-grid">
+                        <!-- Loaded dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Left Sidebar Filters -->
+                <aside class="search-sidebar glass-card">
+                    <div class="sidebar-section">
+                        <h3>Categoría</h3>
+                        <div class="filter-options-list" id="filter-categories">
+                            <!-- Load Categories Dynamic Checkboxes -->
+                            <label class="filter-checkbox-label">
+                                <input type="radio" name="filter-category" value="" checked>
+                                <span>Todas</span>
+                            </label>
+                            <label class="filter-checkbox-label">
+                                <input type="radio" name="filter-category" value="Tecnología">
+                                <span>Tecnología</span>
+                            </label>
+                            <label class="filter-checkbox-label">
+                                <input type="radio" name="filter-category" value="Moda">
+                                <span>Moda</span>
+                            </label>
+                            <label class="filter-checkbox-label">
+                                <input type="radio" name="filter-category" value="Comida">
+                                <span>Comida</span>
+                            </label>
+                            <label class="filter-checkbox-label">
+                                <input type="radio" name="filter-category" value="Hogar">
+                                <span>Hogar</span>
+                            </label>
+                            <label class="filter-checkbox-label">
+                                <input type="radio" name="filter-category" value="Deportes">
+                                <span>Deportes</span>
+                            </label>
+                            <label class="filter-checkbox-label">
+                                <input type="radio" name="filter-category" value="Belleza">
+                                <span>Belleza</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h3>Filtros Rápidos</h3>
+                        <div class="filter-options-list">
+                            <label class="filter-checkbox-label">
+                                <input type="checkbox" id="filter-stock-only">
+                                <span>Solo Disponibles (En Stock)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h3>Precio Máximo</h3>
+                        <div class="price-range-container">
+                            <input type="range" id="filter-price-range" min="0" max="2000" step="50" value="2000">
+                            <div class="price-labels">
+                                <span>$0</span>
+                                <span id="price-range-value">Hasta $2000</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h3>Marcas Populares</h3>
+                        <div class="filter-options-list" id="filter-brands-list">
+                            <!-- JS Injected Brands -->
+                        </div>
+                    </div>
+
+                    <button class="btn btn-outline btn-block" id="btn-clear-filters">Limpiar Filtros</button>
+                </aside>
+            </div>
+        </section>
+
+        <!-- 3. STORE PROFILE VIEW -->
+        <section id="view-store-profile" class="view-container hidden">
+            <!-- Store Profile Header Card -->
+            <div class="store-profile-header-card glass-card">
+                <div class="store-banner-placeholder"></div>
+                <div class="store-profile-info-block">
+                    <img src="/uploads/default_logo.png" alt="Logo de Tienda" class="store-profile-logo" id="store-view-logo">
+                    <div class="store-profile-details">
+                        <div class="store-title-badge">
+                            <h1 id="store-view-name">Nombre de la Tienda</h1>
+                            <span class="badge badge-success"><i data-lucide="check"></i> Oficial</span>
+                        </div>
+                        <p class="store-description" id="store-view-description">Descripción de la tienda...</p>
+                        
+                        <div class="store-contact-meta">
+                            <span id="store-view-address"><i data-lucide="map-pin"></i> Dirección</span>
+                            <span id="store-view-phone"><i data-lucide="phone"></i> Teléfono</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Social & Web links -->
+                    <div class="store-external-links">
+                        <a href="#" target="_blank" class="btn btn-outline btn-sm" id="store-view-web"><i data-lucide="globe"></i> Web Oficial</a>
+                        <div class="social-icons-row" id="store-view-socials">
+                            <!-- JS injected social icons -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Store Catalog List -->
+            <div class="store-catalog-container">
+                <div class="catalog-header">
+                    <h2>Catálogo de Productos</h2>
+                    <div class="catalog-search-input">
+                        <input type="text" id="store-catalog-search" placeholder="Buscar en esta tienda...">
+                    </div>
+                </div>
+                
+                <div class="products-grid" id="store-products-grid">
+                    <!-- Dynamic -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. STORE OWNER DASHBOARD VIEW -->
+        <section id="view-store-dashboard" class="view-container hidden">
+            <div class="dashboard-layout">
+                
+                <!-- Dashboard Sidebar Navigation -->
+                <aside class="dashboard-sidebar glass-card">
+                    <div class="dashboard-user-profile">
+                        <img src="/uploads/default_logo.png" alt="Logo de Tienda" id="dash-store-logo" class="dash-avatar">
+                        <h4 id="dash-store-name">Mi Tienda Oficial</h4>
+                        <p id="dash-owner-name">Propietario</p>
+                    </div>
+                    
+                    <div class="dashboard-menu">
+                        <button class="dash-menu-item active" data-tab="catalog">
+                            <i data-lucide="shopping-bag"></i> Gestionar Catálogo
+                        </button>
+                        <button class="dash-menu-item" data-tab="profile">
+                            <i data-lucide="settings"></i> Perfil del Comercio
+                        </button>
+                    </div>
+                </aside>
+
+                <!-- Dashboard Content Area -->
+                <div class="dashboard-main-content">
+                    
+                    <!-- TAB 1: CATALOG MANAGEMENT -->
+                    <div id="tab-catalog" class="dash-tab-content">
+                        <div class="tab-header">
+                            <div>
+                                <h2>Gestión de Catálogo</h2>
+                                <p>Agrega, edita y administra el inventario de tu tienda oficial.</p>
+                            </div>
+                            <button class="btn btn-primary" id="btn-dash-add-product">
+                                <i data-lucide="plus"></i> Nuevo Producto
+                            </button>
+                        </div>
+
+                        <!-- Catalog Table list of products -->
+                        <div class="catalog-table-wrapper glass-card">
+                            <table class="catalog-table">
+                                <thead>
+                                    <tr>
+                                        <th>Imagen</th>
+                                        <th>Producto</th>
+                                        <th>Categoría</th>
+                                        <th>Precio</th>
+                                        <th>Stock</th>
+                                        <th>Atributos</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dash-products-table-body">
+                                    <!-- Dynamic product rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: STORE PROFILE EDITING -->
+                    <div id="tab-profile" class="dash-tab-content hidden">
+                        <div class="tab-header">
+                            <div>
+                                <h2>Información del Comercio</h2>
+                                <p>Configura los datos públicos de tu negocio y enlaces sociales.</p>
+                            </div>
+                        </div>
+
+                        <div class="profile-edit-form-wrapper glass-card">
+                            <form id="store-profile-form" enctype="multipart/form-data">
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label for="profile-name">Nombre Comercial del Negocio *</label>
+                                        <input type="text" id="profile-name" required placeholder="Ej: GearBox Tech">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profile-logo">Logotipo del Comercio</label>
+                                        <input type="file" id="profile-logo" accept="image/*">
+                                        <span class="file-help">Sube una imagen cuadrada (PNG/JPG).</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="profile-description">Descripción del Negocio</label>
+                                    <textarea id="profile-description" rows="3" placeholder="Describe brevemente a qué se dedica tu negocio y qué tipo de productos ofreces..."></textarea>
+                                </div>
+
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label for="profile-address">Dirección Física</label>
+                                        <input type="text" id="profile-address" placeholder="Ej: Calle Bolívar #450, Sucre">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profile-phone">Teléfono / Celular de Contacto</label>
+                                        <input type="text" id="profile-phone" placeholder="Ej: +591 7 8901234">
+                                    </div>
+                                </div>
+
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label for="profile-web">Sitio Web Externo (opcional)</label>
+                                        <input type="url" id="profile-web" placeholder="Ej: https://mitienda.com">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profile-insta">Enlace de Instagram</label>
+                                        <input type="url" id="profile-insta" placeholder="Ej: https://instagram.com/mitienda">
+                                    </div>
+                                </div>
+
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label for="profile-fb">Enlace de Facebook</label>
+                                        <input type="url" id="profile-fb" placeholder="Ej: https://facebook.com/mitienda">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profile-tw">Enlace de Twitter/X</label>
+                                        <input type="url" id="profile-tw" placeholder="Ej: https://twitter.com/mitienda">
+                                    </div>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary" id="btn-save-profile">Guardar Cambios</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 5. PRODUCT EDITOR MODAL (DASHBOARD) -->
+        <div id="product-editor-modal" class="modal-overlay hidden">
+            <div class="modal-box glass-card">
+                <div class="modal-header">
+                    <h3 id="product-modal-title">Agregar Producto</h3>
+                    <button class="btn-close-modal" id="btn-close-product-modal">&times;</button>
+                </div>
+                <form id="product-editor-form" enctype="multipart/form-data">
+                    <input type="hidden" id="edit-product-id">
+                    
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="prod-name">Nombre del Producto *</label>
+                            <input type="text" id="prod-name" required placeholder="Ej: Zapatillas Deportivas Nike Air Max">
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-category">Categoría *</label>
+                            <select id="prod-category" required>
+                                <option value="Tecnología">Tecnología</option>
+                                <option value="Moda">Moda</option>
+                                <option value="Comida">Comida</option>
+                                <option value="Hogar">Hogar</option>
+                                <option value="Deportes">Deportes</option>
+                                <option value="Belleza">Belleza</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="prod-price">Precio ($) *</label>
+                            <input type="number" id="prod-price" required min="0.1" step="0.01" placeholder="Ej: 120.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-stock">Stock Disponible *</label>
+                            <input type="number" id="prod-stock" required min="0" placeholder="Ej: 10">
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-brand">Marca</label>
+                            <input type="text" id="prod-brand" placeholder="Ej: Nike, Apple, Samsung">
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="prod-color">Color</label>
+                            <input type="text" id="prod-color" placeholder="Ej: Rojo, Negro, Blanco">
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-size">Talla / Tamaño</label>
+                            <input type="text" id="prod-size" placeholder="Ej: M, XL, 42, 250g, 100x60cm">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="prod-description">Descripción del Producto</label>
+                        <textarea id="prod-description" rows="2" placeholder="Detalla las características del producto..."></textarea>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="prod-image">Imagen del Producto (Archivo)</label>
+                            <input type="file" id="prod-image" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-image-url">U alternativo (URL de Imagen)</label>
+                            <input type="url" id="prod-image-url" placeholder="https://ejemplo.com/imagen.jpg">
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Technical Specs Section -->
+                    <div class="form-group">
+                        <label>Especificaciones Técnicas / Atributos (JSON opcional)</label>
+                        <textarea id="prod-specs-json" rows="2" placeholder='Ej: {"RAM": "16GB", "Disco": "SSD"} o {"azúcar": "sin azúcar"}'></textarea>
+                        <span class="file-help">Ingresa un formato JSON simple para atributos detallados que la IA pueda leer.</span>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" id="btn-cancel-product-modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="btn-submit-product-modal">Guardar Producto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 6. REGISTRATION & LOGIN MODAL -->
+        <div id="auth-modal" class="modal-overlay hidden">
+            <div class="modal-box glass-card auth-modal-box">
+                <div class="modal-header">
+                    <h3 id="auth-modal-title">Iniciar Sesión</h3>
+                    <button class="btn-close-modal" id="btn-close-auth-modal">&times;</button>
+                </div>
+                
+                <!-- Auth Forms Wrapper -->
+                <div class="auth-forms-container">
+                    
+                    <!-- TAB SELECTORS -->
+                    <div class="auth-tabs">
+                        <button class="auth-tab-btn active" id="auth-tab-login-btn">Ingresar</button>
+                        <button class="auth-tab-btn" id="auth-tab-register-btn">Registrarse</button>
+                    </div>
+
+                    <!-- LOGIN FORM -->
+                    <form id="login-form" class="auth-form">
+                        <div class="form-group">
+                            <label for="login-email">Correo Electrónico</label>
+                            <input type="email" id="login-email" required placeholder="correo@ejemplo.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Contraseña</label>
+                            <input type="password" id="login-password" required placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block btn-lg">Ingresar a la Plataforma</button>
+                        <p class="auth-toggle-help">¿No tienes cuenta? <a href="#" id="link-to-register">Regístrate aquí</a></p>
+                    </form>
+
+                    <!-- REGISTER FORM -->
+                    <form id="register-form" class="auth-form hidden">
+                        <div class="form-group">
+                            <label for="register-name">Nombre Completo</label>
+                            <input type="text" id="register-name" required placeholder="Ej: Juan Pérez">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">Correo Electrónico</label>
+                            <input type="email" id="register-email" required placeholder="correo@ejemplo.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">Contraseña</label>
+                            <input type="password" id="register-password" required placeholder="Mínimo 6 caracteres">
+                        </div>
+
+                        <!-- Store Owner checkbox triggers store_name field -->
+                        <div class="form-checkbox-group">
+                            <input type="checkbox" id="register-is-owner">
+                            <label for="register-is-owner" class="checkbox-custom-label">Soy dueño de un comercio oficial (Tienda)</label>
+                        </div>
+
+                        <div class="form-group hidden" id="register-store-name-container">
+                            <label for="register-store-name">Nombre de tu Tienda Oficial *</label>
+                            <input type="text" id="register-store-name" placeholder="Ej: Estilo Urbano, TechStore">
+                            <span class="file-help">Los usuarios comunes no pueden vender productos individuales; sólo tiendas oficiales registradas.</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block btn-lg">Crear Cuenta</button>
+                        <p class="auth-toggle-help">¿Ya tienes cuenta? <a href="#" id="link-to-login">Inicia sesión</a></p>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="main-footer">
+        <div class="footer-container">
+            <p>&copy; 2026 SucreShop. Todos los derechos reservados. Centralizando el comercio local con IA.</p>
+            <div class="footer-badges">
+                <span class="badge badge-outline">Hecho en Bolivia</span>
+                <span class="badge badge-outline">FastAPI + Vanilla JS</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
