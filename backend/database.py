@@ -3,8 +3,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Database file location
-DATABASE_URL = "sqlite:///./sucreshop.db"
+# Database connection URL (can be overridden via environment variables in Render/production)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./sucreshop.db")
 
 # Create engine
 engine = create_engine(
