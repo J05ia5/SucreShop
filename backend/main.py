@@ -756,6 +756,8 @@ def admin_get_stores(
                 logo_url=store.logo_url,
                 status=store.status,
                 status_reason=store.status_reason,
+                rating=store.rating,
+                rating_count=store.rating_count,
                 owner_email=owner.email if owner else "Sin correo",
                 owner_name=owner.full_name if owner else "Sin nombre"
             )
