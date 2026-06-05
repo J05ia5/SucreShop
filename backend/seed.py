@@ -1,5 +1,6 @@
 import sys
 import os
+from datetime import datetime, timedelta
 # Adjust path to import from backend
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -63,6 +64,8 @@ def seed_db():
                 "instagram_url": "https://instagram.com/gearbox_tech",
                 "facebook_url": "https://facebook.com/gearbox_tech",
                 "status": "approved",
+                "rating": 4.8,
+                "rating_count": 12,
             },
             {
                 "owner_id": db_users["stylelab@shop.com"].id,
@@ -73,6 +76,8 @@ def seed_db():
                 "phone": "+591 7 8901234",
                 "instagram_url": "https://instagram.com/stylelab_bo",
                 "status": "approved",
+                "rating": 4.5,
+                "rating_count": 8,
             },
             {
                 "owner_id": db_users["choco@shop.com"].id,
@@ -84,6 +89,8 @@ def seed_db():
                 "website_url": "https://chocodelight.shop",
                 "instagram_url": "https://instagram.com/chocodelight",
                 "status": "approved",
+                "rating": 4.9,
+                "rating_count": 35,
             },
             {
                 "owner_id": db_users["ecohome@shop.com"].id,
@@ -94,6 +101,8 @@ def seed_db():
                 "phone": "+591 7 1234567",
                 "facebook_url": "https://facebook.com/ecohome_sucre",
                 "status": "approved",
+                "rating": 4.2,
+                "rating_count": 5,
             },
             {
                 "owner_id": db_users["fitzone@shop.com"].id,
@@ -104,6 +113,8 @@ def seed_db():
                 "phone": "+591 7 5556677",
                 "instagram_url": "https://instagram.com/fitzone_sucre",
                 "status": "approved",
+                "rating": 4.6,
+                "rating_count": 15,
             },
             {
                 "owner_id": db_users["chapaco@shop.com"].id,
@@ -113,6 +124,8 @@ def seed_db():
                 "address": "Calle Calvo #220, Sucre",
                 "phone": "+591 7 4443322",
                 "status": "pending",
+                "rating": 0.0,
+                "rating_count": 0,
             },
             {
                 "owner_id": db_users["pixel@shop.com"].id,
@@ -123,6 +136,8 @@ def seed_db():
                 "phone": "+591 7 1112233",
                 "status": "rejected",
                 "status_reason": "Falta subir el certificado de sanidad local o registro de comercio oficial.",
+                "rating": 0.0,
+                "rating_count": 0,
             },
             {
                 "owner_id": db_users["sushi@shop.com"].id,
@@ -132,6 +147,8 @@ def seed_db():
                 "address": "Calle España #110, Sucre",
                 "phone": "+591 4 6438899",
                 "status": "pending",
+                "rating": 0.0,
+                "rating_count": 0,
             }
         ]
         
@@ -145,6 +162,7 @@ def seed_db():
         print("-> Tiendas creadas con éxito.")
         
         # 3. CREATE PRODUCTS
+        now = datetime.utcnow()
         products_data = [
             # GearBox Tech
             {
@@ -158,7 +176,11 @@ def seed_db():
                 "color": "negro",
                 "size": None,
                 "specs": {"RAM": "16GB", "Disco": "SSD", "Almacenamiento": "1TB SSD", "Tarjeta Video": "RTX 4070"},
-                "image_url": "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=2),
+                "sales_count": 8,
+                "rating": 4.9,
+                "rating_count": 15
             },
             {
                 "store_id": db_stores["GearBox Tech"].id,
@@ -171,7 +193,11 @@ def seed_db():
                 "color": "gris",
                 "size": None,
                 "specs": {"RAM": "12GB", "Almacenamiento": "512GB SSD", "Pantalla": "6.8 pulgadas"},
-                "image_url": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=5),
+                "sales_count": 12,
+                "rating": 4.7,
+                "rating_count": 22
             },
             {
                 "store_id": db_stores["GearBox Tech"].id,
@@ -184,7 +210,11 @@ def seed_db():
                 "color": "negro",
                 "size": None,
                 "specs": {"Switches": "Razer Yellow", "Teclado": "Mecánico", "RGB": "Chroma"},
-                "image_url": "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=10),
+                "sales_count": 25,
+                "rating": 4.5,
+                "rating_count": 18
             },
             {
                 "store_id": db_stores["GearBox Tech"].id,
@@ -197,7 +227,11 @@ def seed_db():
                 "color": "negro",
                 "size": None,
                 "specs": {"Cancelación Ruido": "Activa", "Batería": "30 horas", "RAM": "None"},
-                "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=1),
+                "sales_count": 18,
+                "rating": 4.8,
+                "rating_count": 30
             },
             
             # StyleLab
@@ -212,7 +246,11 @@ def seed_db():
                 "color": "rojo",
                 "size": "42",
                 "specs": {"Deporte": "Running", "Ajuste": "Cordones"},
-                "image_url": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=8),
+                "sales_count": 35,
+                "rating": 4.6,
+                "rating_count": 45
             },
             {
                 "store_id": db_stores["StyleLab"].id,
@@ -225,7 +263,11 @@ def seed_db():
                 "color": "negro",
                 "size": "40",
                 "specs": {"Deporte": "Running", "Estilo": "Urbano"},
-                "image_url": "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=12),
+                "sales_count": 22,
+                "rating": 4.8,
+                "rating_count": 25
             },
             {
                 "store_id": db_stores["StyleLab"].id,
@@ -238,7 +280,11 @@ def seed_db():
                 "color": "blanco",
                 "size": "M",
                 "specs": {"Material": "100% Algodón", "Corte": "Oversized"},
-                "image_url": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=4),
+                "sales_count": 50,
+                "rating": 4.2,
+                "rating_count": 12
             },
             {
                 "store_id": db_stores["StyleLab"].id,
@@ -251,7 +297,11 @@ def seed_db():
                 "color": "azul",
                 "size": "S",
                 "specs": {"Material": "Lino", "Estilo": "Casual"},
-                "image_url": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=15),
+                "sales_count": 0,
+                "rating": 0.0,
+                "rating_count": 0
             },
             
             # ChocoDelight
@@ -266,7 +316,11 @@ def seed_db():
                 "color": "marrón",
                 "size": "100g",
                 "specs": {"azúcar": "sin azúcar", "tipo": "amargo", "cultivo": "orgánico"},
-                "image_url": "https://images.unsplash.com/photo-1548907040-4d42b52125ca?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1548907040-4d42b52125ca?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=20),
+                "sales_count": 120,
+                "rating": 4.9,
+                "rating_count": 85
             },
             {
                 "store_id": db_stores["ChocoDelight"].id,
@@ -279,7 +333,11 @@ def seed_db():
                 "color": None,
                 "size": "250g",
                 "specs": {"tipo": "bombones", "relleno": "surtido"},
-                "image_url": "https://images.unsplash.com/photo-1549007994-cb92ca817bc7?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1549007994-cb92ca817bc7?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=3),
+                "sales_count": 40,
+                "rating": 4.7,
+                "rating_count": 32
             },
             {
                 "store_id": db_stores["ChocoDelight"].id,
@@ -292,7 +350,11 @@ def seed_db():
                 "color": None,
                 "size": "450g",
                 "specs": {"cultivo": "orgánico", "tostado": "medio"},
-                "image_url": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=6),
+                "sales_count": 75,
+                "rating": 4.8,
+                "rating_count": 40
             },
             
             # EcoHome
@@ -307,7 +369,11 @@ def seed_db():
                 "color": "marrón",
                 "size": "Mediano",
                 "specs": {"Material": "Bambú", "Luz": "Cálida (LED)"},
-                "image_url": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=11),
+                "sales_count": 6,
+                "rating": 4.4,
+                "rating_count": 5
             },
             {
                 "store_id": db_stores["EcoHome"].id,
@@ -320,7 +386,11 @@ def seed_db():
                 "color": "marrón",
                 "size": "100x60cm",
                 "specs": {"Material": "Roble Reciclado", "Estilo": "Rústico"},
-                "image_url": "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=14),
+                "sales_count": 2,
+                "rating": 5.0,
+                "rating_count": 2
             },
             
             # FitZone
@@ -335,7 +405,11 @@ def seed_db():
                 "color": "negro",
                 "size": "20kg",
                 "specs": {"Peso": "20kg", "Material": "Hierro Fundido"},
-                "image_url": "https://images.unsplash.com/photo-1638536532686-d610adfc8e5c?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1638536532686-d610adfc8e5c?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=7),
+                "sales_count": 14,
+                "rating": 4.5,
+                "rating_count": 10
             },
             {
                 "store_id": db_stores["FitZone"].id,
@@ -348,7 +422,11 @@ def seed_db():
                 "color": "azul",
                 "size": "6mm",
                 "specs": {"Espesor": "6mm", "Material": "TPE Ecológico"},
-                "image_url": "https://images.unsplash.com/photo-1592432678016-e910b452f9a2?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1592432678016-e910b452f9a2?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=9),
+                "sales_count": 29,
+                "rating": 4.3,
+                "rating_count": 15
             },
             {
                 "store_id": db_stores["FitZone"].id,
@@ -361,7 +439,11 @@ def seed_db():
                 "color": "verde",
                 "size": "750ml",
                 "specs": {"Capacidad": "750ml", "Material": "Acero Inoxidable 18/8"},
-                "image_url": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500&auto=format&fit=crop&q=60"
+                "image_url": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500&auto=format&fit=crop&q=60",
+                "created_at": now - timedelta(days=13),
+                "sales_count": 55,
+                "rating": 4.6,
+                "rating_count": 20
             }
         ]
         
@@ -382,3 +464,4 @@ def seed_db():
 
 if __name__ == "__main__":
     seed_db()
+

@@ -109,7 +109,9 @@ const api = {
         if (filters.category) params.append("category", filters.category);
         if (filters.brand) params.append("brand", filters.brand);
         if (filters.maxPrice) params.append("max_price", filters.maxPrice);
+        if (filters.minPrice) params.append("min_price", filters.minPrice);
         if (filters.inStock) params.append("in_stock", filters.inStock);
+        if (filters.minRating) params.append("min_rating", filters.minRating);
 
         const url = `${API_BASE}/api/products?${params.toString()}`;
         return await this.request(url);
@@ -118,6 +120,64 @@ const api = {
     async aiSearch(query) {
         const params = new URLSearchParams({ query });
         return await this.request(`${API_BASE}/api/search?${params.toString()}`);
+    },
+
+    async rateProduct(productId, rating) {
+        const formData = new FormData();
+        formData.append("rating", rating);
+        return await this.request(`${API_BASE}/api/products/${productId}/rate`, {
+            method: "POST",
+            body: formData
+        });
+    },
+
+    async rateStore(storeId, rating) {
+        const formData = new FormData();
+        formData.append("rating", rating);
+        return await this.request(`${API_BASE}/api/stores/${storeId}/rate`, {
+            method: "POST",
+            body: formData
+        });
+    },
+
+    async purchaseProduct(productId) {
+        return await this.request(`${API_BASE}/api/products/${productId}/purchase`, {
+            method: "POST"
+        });
+    },
+
+    // --- PURCHASE REQUESTS ---
+
+    async requestProduct(productId, paymentMethod) {
+        return await this.request(`${API_BASE}/api/products/${productId}/request`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ payment_method: paymentMethod })
+        });
+    },
+
+    async getStoreRequests() {
+        return await this.request(`${API_BASE}/api/stores/me/requests`);
+    },
+
+    async confirmRequest(requestId) {
+        return await this.request(`${API_BASE}/api/requests/${requestId}/confirm`, {
+            method: "PUT"
+        });
+    },
+
+    async deliverRequest(requestId) {
+        return await this.request(`${API_BASE}/api/requests/${requestId}/deliver`, {
+            method: "PUT"
+        });
+    },
+
+    async rejectRequest(requestId) {
+        return await this.request(`${API_BASE}/api/requests/${requestId}/reject`, {
+            method: "PUT"
+        });
     },
 
     // --- STORE OWNER OPERATIONS ---

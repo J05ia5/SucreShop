@@ -14,11 +14,16 @@ const state = {
         category: "",
         brand: "",
         maxPrice: 2000,
-        inStock: false
+        inStock: false,
+        minRating: 0
     },
     // Store owner state
     myStore: null,
-    myProducts: []
+    myProducts: [],
+    // Landing page carousel state
+    landingAllProducts: [],
+    landingPage: 0,
+    landingQuery: ""
 };
 
 // 2. DOM CONTENT LOADED - INITIALIZATION
@@ -37,9 +42,6 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Setup Global Event Listeners
     setupGlobalListeners();
-    
-    // Update Stats on Landing Page
-    updateLandingStats();
     
     // Initialize Lucide Icons
     if (window.lucide) {
@@ -64,7 +66,13 @@ function handleRouting() {
         document.getElementById("view-landing").classList.remove("active");
         document.getElementById("view-landing").classList.remove("hidden");
         document.querySelector('[data-view="landing"]').classList.add("active");
-        loadLandingStores();
+        loadLandingInitial();
+    } 
+    else if (route === "#stores") {
+        state.currentView = "stores";
+        document.getElementById("view-stores").classList.remove("hidden");
+        document.querySelector('[data-view="stores"]').classList.add("active");
+        loadStoresList();
     } 
     else if (route === "#search") {
         state.currentView = "search";
@@ -119,6 +127,7 @@ function handleRouting() {
     closeModal("product-editor-modal");
     closeModal("admin-store-detail-modal");
     closeModal("admin-action-modal");
+    closeModal("checkout-modal");
     
     // Re-create icons for static layouts
     setTimeout(() => {
@@ -230,75 +239,42 @@ function setupGlobalListeners() {
         window.location.hash = "#landing";
     });
     
-    // Landing Hero Actions
-    document.getElementById("hero-btn-explore").addEventListener("click", () => {
-        window.location.hash = "#search";
+    // Benefits Register Button
+    const benefitsBtn = document.getElementById("benefits-register-btn");
+    if (benefitsBtn) {
+        benefitsBtn.addEventListener("click", () => {
+            openAuthModal("register");
+            const ownerCb = document.getElementById("register-is-owner");
+            if (ownerCb) ownerCb.checked = true;
+            const storeNameContainer = document.getElementById("register-store-name-container");
+            if (storeNameContainer) storeNameContainer.classList.remove("hidden");
+        });
+    }
+
+    // LANDING PAGE AI SEARCH
+    const landingInput = document.getElementById("landing-search-input");
+    const landingSubmit = document.getElementById("landing-search-submit");
+
+    landingSubmit.addEventListener("click", () => {
+        triggerLandingSearch(landingInput.value.trim());
     });
-    document.getElementById("hero-btn-register-store").addEventListener("click", () => {
-        openAuthModal("register");
-        document.getElementById("register-is-owner").checked = true;
-        document.getElementById("register-store-name-container").classList.remove("hidden");
-    });
-    document.getElementById("benefits-register-btn").addEventListener("click", () => {
-        openAuthModal("register");
-        document.getElementById("register-is-owner").checked = true;
-        document.getElementById("register-store-name-container").classList.remove("hidden");
+    landingInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") triggerLandingSearch(landingInput.value.trim());
     });
 
-    // AI Landing Live Preview Demo Box
-    const aiDemoInput = document.getElementById("ai-demo-input");
-    const aiDemoSubmit = document.getElementById("ai-demo-submit");
-    const aiDemoViz = document.getElementById("ai-demo-viz");
-    
-    const triggerDemoParse = async () => {
-        const val = aiDemoInput.value.trim();
-        if (!val) return;
-        
-        // Show indicator / loading state
-        aiDemoViz.innerHTML = `<div class="viz-placeholder"><i data-lucide="loader" class="animate-spin"></i> Interpretando búsqueda...</div>`;
-        if (window.lucide) lucide.createIcons();
-        
-        try {
-            const data = await api.aiSearch(val);
-            const inter = data.interpretation;
-            
-            // Build filter string
-            let filtersStr = [];
-            if (inter.color) filtersStr.push(`Color: ${inter.color}`);
-            if (inter.size) filtersStr.push(`Talla: ${inter.size}`);
-            if (inter.max_price) filtersStr.push(`Máx: $${inter.max_price}`);
-            if (inter.min_price) filtersStr.push(`Mín: $${inter.min_price}`);
-            if (inter.in_stock_only) filtersStr.push("En Stock");
-            if (inter.is_budget) filtersStr.push("Económico");
-            for (let [k, v] of Object.entries(inter.specs)) {
-                filtersStr.push(`${k}: ${v}`);
-            }
-            
-            aiDemoViz.innerHTML = `
-                <div class="viz-results">
-                    <div class="viz-item"><span class="viz-label">Categoría:</span> <span class="viz-value">${inter.category || "General"}</span></div>
-                    <div class="viz-item"><span class="viz-label">Marca:</span> <span class="viz-value">${inter.brand || "Todas"}</span></div>
-                    <div class="viz-item"><span class="viz-label">Filtros:</span> <span class="viz-value">${filtersStr.length > 0 ? filtersStr.join(", ") : "Ninguno"}</span></div>
-                    <div class="viz-explanation">${inter.explanation}</div>
-                    <button class="btn btn-outline btn-sm btn-block" id="viz-search-btn-demo">Buscar este producto real</button>
-                </div>
-            `;
-            
-            if (window.lucide) lucide.createIcons();
-            
-            // Redirect to search view with query
-            document.getElementById("viz-search-btn-demo").addEventListener("click", () => {
-                window.location.hash = `#search?q=${encodeURIComponent(val)}`;
-            });
-            
-        } catch (err) {
-            aiDemoViz.innerHTML = `<div class="viz-placeholder" style="color:hsl(var(--danger))">Error al conectar con la IA.</div>`;
+    // LANDING CAROUSEL CONTROLS
+    document.getElementById("landing-carousel-prev").addEventListener("click", () => {
+        if (state.landingPage > 0) {
+            state.landingPage--;
+            renderLandingProducts();
         }
-    };
-
-    aiDemoSubmit.addEventListener("click", triggerDemoParse);
-    aiDemoInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") triggerDemoParse();
+    });
+    document.getElementById("landing-carousel-next").addEventListener("click", () => {
+        const totalPages = Math.ceil(state.landingAllProducts.length / 12) || 1;
+        if (state.landingPage < totalPages - 1) {
+            state.landingPage++;
+            renderLandingProducts();
+        }
     });
 
     // REAL EXPLORE SEARCH INPUTS
@@ -316,6 +292,21 @@ function setupGlobalListeners() {
     document.querySelectorAll('input[name="filter-category"]').forEach(radio => {
         radio.addEventListener("change", (e) => {
             state.filters.category = e.target.value;
+            loadProductsList();
+        });
+    });
+
+    document.querySelectorAll('input[name="filter-rating"]').forEach(radio => {
+        radio.addEventListener("change", (e) => {
+            state.filters.minRating = parseFloat(e.target.value);
+            // Highlight active badge
+            document.querySelectorAll(".rating-badge").forEach(badge => {
+                badge.classList.remove("active");
+            });
+            const badge = e.target.nextElementSibling;
+            if (badge) {
+                badge.classList.add("active");
+            }
             loadProductsList();
         });
     });
@@ -345,9 +336,21 @@ function setupGlobalListeners() {
         state.filters.brand = "";
         state.filters.inStock = false;
         state.filters.maxPrice = 2000;
+        state.filters.minRating = 0;
         
         // Reset controls
         document.querySelectorAll('input[name="filter-category"]')[0].checked = true;
+        
+        // Reset rating buttons
+        document.querySelectorAll('input[name="filter-rating"]').forEach((radio, idx) => {
+            radio.checked = idx === 0;
+            const badge = radio.nextElementSibling;
+            if (badge) {
+                if (idx === 0) badge.classList.add("active");
+                else badge.classList.remove("active");
+            }
+        });
+
         document.getElementById("filter-stock-only").checked = false;
         document.getElementById("filter-price-range").value = 2000;
         priceRangeVal.textContent = "Hasta $2000";
@@ -404,9 +407,166 @@ function setupGlobalListeners() {
     document.getElementById("btn-close-auth-modal").addEventListener("click", () => closeModal("auth-modal"));
     document.getElementById("btn-close-product-modal").addEventListener("click", () => closeModal("product-editor-modal"));
     document.getElementById("btn-cancel-product-modal").addEventListener("click", () => closeModal("product-editor-modal"));
+    
+    // CHECKOUT MODAL CLOSING ACTIONS
+    document.getElementById("btn-close-checkout-modal").addEventListener("click", () => closeModal("checkout-modal"));
+    document.getElementById("btn-cancel-checkout").addEventListener("click", () => closeModal("checkout-modal"));
 }
 
-// 7. VIEW LOADER: LANDING PAGE STORES
+// 7. VIEW LOADER: LANDING PAGE
+async function loadLandingInitial() {
+    loadLandingStores();
+    // Start with empty products grid
+    state.landingAllProducts = [];
+    state.landingPage = 0;
+    state.landingQuery = "";
+    renderLandingProducts();
+}
+
+async function triggerLandingSearch(query) {
+    const grid = document.getElementById("landing-products-grid");
+    const insights = document.getElementById("landing-ai-insights");
+
+    if (!query) {
+        state.landingAllProducts = [];
+        state.landingPage = 0;
+        state.landingQuery = "";
+        insights.classList.add("hidden");
+        renderLandingProducts();
+        return;
+    }
+
+    state.landingQuery = query;
+    grid.innerHTML = `<div class="skeleton-loader"></div><div class="skeleton-loader"></div>`;
+    if (window.lucide) lucide.createIcons();
+
+    try {
+        const data = await api.aiSearch(query);
+        const inter = data.interpretation;
+        state.landingAllProducts = data.results || [];
+        state.landingPage = 0;
+
+        insights.classList.remove("hidden");
+        document.getElementById("landing-ai-explanation").textContent = (inter.explanation || "").replace(/\*\*/g, "");
+
+        const tagsContainer = document.getElementById("landing-ai-tags");
+        tagsContainer.innerHTML = "";
+        const addTag = (text) => {
+            const tag = document.createElement("span");
+            tag.className = "badge badge-purple";
+            tag.textContent = text;
+            tagsContainer.appendChild(tag);
+        };
+        if (inter.category) addTag(`Categoría: ${inter.category}`);
+        if (inter.brand) addTag(`Marca: ${inter.brand}`);
+        if (inter.color) addTag(`Color: ${inter.color}`);
+        if (inter.size) addTag(`Talla: ${inter.size}`);
+        if (inter.max_price) addTag(`Máx: $${inter.max_price}`);
+        if (inter.min_price) addTag(`Mín: $${inter.min_price}`);
+        if (inter.in_stock_only) addTag("En Stock");
+        if (inter.sort_by) {
+            const sortLabels = { recent: "Más recientes", most_purchased: "Más vendidos", best_rated: "Mejor calificados", price_asc: "Menor precio", price_desc: "Mayor precio" };
+            addTag(`Orden: ${sortLabels[inter.sort_by] || inter.sort_by}`);
+        }
+        for (let [k, v] of Object.entries(inter.specs || {})) {
+            addTag(`${k}: ${v}`);
+        }
+
+        renderLandingProducts();
+    } catch (err) {
+        grid.innerHTML = `<div class="error-msg glass-card" style="grid-column:1/-1;text-align:center;padding:2rem;">Error en búsqueda: ${err.message}</div>`;
+    }
+    if (window.lucide) lucide.createIcons();
+}
+
+function renderLandingProducts() {
+    const grid = document.getElementById("landing-products-grid");
+    const all = state.landingAllProducts;
+    const totalPages = Math.ceil(all.length / 12) || 1;
+    const page = state.landingPage;
+
+    document.getElementById("landing-carousel-page").textContent = `${page + 1} / ${totalPages}`;
+    document.getElementById("landing-carousel-prev").disabled = page <= 0;
+    document.getElementById("landing-carousel-next").disabled = page >= totalPages - 1;
+
+    const title = document.getElementById("landing-results-title");
+    if (state.landingQuery) {
+        title.textContent = `Resultados para: "${state.landingQuery}" (${all.length} productos)`;
+    } else {
+        title.textContent = `Busca productos con IA`;
+    }
+
+    if (all.length === 0) {
+        grid.innerHTML = `<div class="no-results glass-card" style="grid-column:1/-1;text-align:center;padding:3rem 1rem;">
+            <i data-lucide="sparkles" style="width:48px;height:48px;color:var(--color-purple);margin-bottom:1rem;opacity:0.6;"></i>
+            <h4 style="font-weight:600;margin-bottom:0.4rem;">Busca productos con Inteligencia Artificial</h4>
+            <p style="color:hsl(var(--text-muted));font-size:0.9rem;max-width:400px;margin:0 auto;">Escribe lo que necesitas en el buscador de arriba. Ej: "zapatillas nike rojas talla 42" o "laptop gamer 16gb ram"</p>
+        </div>`;
+        if (window.lucide) lucide.createIcons();
+        return;
+    }
+
+    const start = page * 12;
+    const end = start + 12;
+    const pageProducts = all.slice(start, end);
+
+    grid.innerHTML = pageProducts.map(prod => {
+        const isOutOfStock = prod.stock <= 0;
+        const ratingVal = prod.rating || 0;
+        const ratingCount = prod.rating_count || 0;
+        const salesCount = prod.sales_count || 0;
+        let starsHtml = "";
+        for (let i = 1; i <= 5; i++) {
+            starsHtml += `<span style="color:${i <= Math.round(ratingVal) ? '#eab308' : 'rgba(255,255,255,0.2)'};">★</span>`;
+        }
+        return `
+        <div class="product-card glass-card">
+            <div class="product-image-container">
+                <img src="${prod.image_url || '/uploads/default_product.png'}" alt="${prod.name}" class="product-img" onerror="this.onerror=null;this.src='/uploads/default_product.png';">
+                <span class="product-badge-stock badge ${isOutOfStock ? 'badge-outline' : 'badge-success'}">${isOutOfStock ? 'Agotado' : prod.stock}</span>
+            </div>
+            <div class="product-info">
+                <a href="#store/${prod.store_id}" class="product-store-link">${prod.store_name || 'Tienda'}</a>
+                <h4 class="product-name" title="${prod.name}">${prod.name}</h4>
+                <div style="display:flex;align-items:center;gap:0.2rem;margin-bottom:0.3rem;flex-wrap:wrap;">
+                    ${starsHtml}
+                    <span style="font-size:0.65rem;color:#9ca3af;">(${ratingVal.toFixed(1)}/${ratingCount})</span>
+                    <span class="badge badge-outline" style="font-size:0.6rem;color:#60a5fa;border-color:#60a5fa;padding:0.1rem 0.3rem;margin-left:auto;">${salesCount} vend.</span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:0.2rem;margin-bottom:0.4rem;">
+                    ${prod.brand ? `<span class="badge badge-outline" style="font-size:0.6rem;">${prod.brand}</span>` : ''}
+                    ${prod.color ? `<span class="badge badge-outline" style="font-size:0.6rem;">${prod.color}</span>` : ''}
+                    ${prod.size ? `<span class="badge badge-outline" style="font-size:0.6rem;">T:${prod.size}</span>` : ''}
+                </div>
+                <div class="product-card-footer" style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+                    <span class="product-price" style="flex:1 1 100%;font-size:1rem;">$${prod.price.toFixed(2)}</span>
+                    <a href="https://wa.me/${prod.store_phone || '59170000000'}?text=Hola,%20estoy%20interesado%20en%20el%20producto%20${encodeURIComponent(prod.name)}"
+                       target="_blank" class="btn btn-outline btn-sm" style="flex:1;font-size:0.7rem;padding:0.3rem;">
+                       <i data-lucide="message-square" style="width:11px;height:11px;"></i> Consultar
+                    </a>
+                    <button class="btn btn-primary btn-sm btn-reserve-product" data-id="${prod.id}" style="flex:1;font-size:0.7rem;padding:0.3rem;" ${isOutOfStock ? 'disabled' : ''}>
+                        ${state.token ? 'Comprar' : 'Iniciar Sesión'}
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    }).join("");
+
+    document.querySelectorAll(".btn-reserve-product").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            if (!state.token) {
+                showToast("Debes iniciar sesión para comprar.", "warning");
+                openAuthModal("login");
+                return;
+            }
+            openCheckoutModal(parseInt(e.target.dataset.id));
+        });
+    });
+
+    updateLandingStats();
+    if (window.lucide) lucide.createIcons();
+}
+
 async function loadLandingStores() {
     const grid = document.getElementById("landing-stores-grid");
     grid.innerHTML = `<div class="skeleton-loader"></div><div class="skeleton-loader"></div><div class="skeleton-loader"></div>`;
@@ -420,19 +580,30 @@ async function loadLandingStores() {
             return;
         }
         
-        grid.innerHTML = stores.map(store => `
+        grid.innerHTML = stores.map(store => {
+            const storeRating = store.rating || 0;
+            const storeRatingCount = store.rating_count || 0;
+            let storeStarsHtml = "";
+            for (let i = 1; i <= 5; i++) {
+                storeStarsHtml += `<span style="color: ${i <= Math.round(storeRating) ? '#eab308' : 'rgba(255,255,255,0.2)'}; font-size: 0.8rem;">★</span>`;
+            }
+            return `
             <div class="store-card glass-card" onclick="window.location.hash='#store/${store.id}'">
                 <div class="store-logo-wrapper">
                     <img src="${store.logo_url || '/uploads/default_logo.png'}" alt="Logo ${store.name}" class="store-logo-img" onerror="this.onerror=null;this.src='/uploads/default_logo.png';">
                 </div>
                 <h4>${store.name}</h4>
+                <div style="display:flex; align-items:center; gap:0.25rem; margin:0.3rem 0;">
+                    ${storeStarsHtml}
+                    <span style="font-size:0.7rem; color:#9ca3af;">(${storeRating.toFixed(1)} / ${storeRatingCount})</span>
+                </div>
                 <p class="store-card-desc">${store.description || 'Sin descripción.'}</p>
                 <div class="store-meta-badge">
                     <i data-lucide="map-pin" style="width:14px;height:14px;"></i>
                     <span>${store.address || 'Sucre'}</span>
                 </div>
-            </div>
-        `).join("");
+            </div>`;
+        }).join("");
         
         if (window.lucide) lucide.createIcons();
     } catch (err) {
@@ -440,13 +611,59 @@ async function loadLandingStores() {
     }
 }
 
-async function updateLandingStats() {
+async function loadStoresList() {
+    const grid = document.getElementById("stores-list-grid");
+    grid.innerHTML = `<div class="skeleton-loader"></div><div class="skeleton-loader"></div><div class="skeleton-loader"></div>`;
+
     try {
         const stores = await api.getStores();
-        const products = await api.getProducts();
-        
-        document.getElementById("stat-stores").textContent = `+${stores.length} Tiendas`;
-        document.getElementById("stat-products").textContent = `+${products.length} Productos`;
+
+        if (stores.length === 0) {
+            grid.innerHTML = `<div class="no-results glass-card" style="grid-column:1/-1;text-align:center;padding:2rem;">No hay tiendas registradas.</div>`;
+            return;
+        }
+
+        grid.innerHTML = stores.map(store => {
+            const storeRating = store.rating || 0;
+            const storeRatingCount = store.rating_count || 0;
+            let storeStarsHtml = "";
+            for (let i = 1; i <= 5; i++) {
+                storeStarsHtml += `<span style="color: ${i <= Math.round(storeRating) ? '#eab308' : 'rgba(255,255,255,0.2)'}; font-size: 0.8rem;">★</span>`;
+            }
+            return `
+            <div class="store-card glass-card" onclick="window.location.hash='#store/${store.id}'">
+                <div class="store-logo-wrapper">
+                    <img src="${store.logo_url || '/uploads/default_logo.png'}" alt="Logo ${store.name}" class="store-logo-img" onerror="this.onerror=null;this.src='/uploads/default_logo.png';">
+                </div>
+                <h4>${store.name}</h4>
+                <div style="display:flex; align-items:center; gap:0.25rem; margin:0.3rem 0; justify-content:center;">
+                    ${storeStarsHtml}
+                    <span style="font-size:0.7rem; color:#9ca3af;">(${storeRating.toFixed(1)} / ${storeRatingCount})</span>
+                </div>
+                <p class="store-card-desc">${store.description || 'Sin descripción.'}</p>
+                <div class="store-meta-badge" style="justify-content:center;">
+                    <i data-lucide="map-pin" style="width:14px;height:14px;"></i>
+                    <span>${store.address || 'Sucre'}</span>
+                </div>
+            </div>`;
+        }).join("");
+
+        if (window.lucide) lucide.createIcons();
+    } catch (err) {
+        grid.innerHTML = `<div class="error-msg glass-card" style="grid-column:1/-1;text-align:center;padding:2rem;">Error al cargar tiendas: ${err.message}</div>`;
+    }
+}
+
+async function updateLandingStats() {
+    try {
+        if (state.stores.length === 0) {
+            const stores = await api.getStores();
+            state.stores = stores;
+        }
+        document.getElementById("stat-stores").textContent = `+${state.stores.length} Tiendas`;
+        // Fetch actual total product count for stats (separate from search results)
+        const allProds = await api.getProducts({});
+        document.getElementById("stat-products").textContent = `+${allProds.length} Productos`;
     } catch (e) {
         console.warn("Could not load landing stats", e);
     }
@@ -522,6 +739,29 @@ async function triggerAISearch(query) {
             document.getElementById("filter-price-range").value = 2000;
             document.getElementById("price-range-value").textContent = "Hasta $2000";
             state.filters.maxPrice = 2000;
+        }
+
+        // Sync sort_by from AI to the sort dropdown
+        const sortSelect = document.getElementById("sort-select");
+        const sortByMap = {
+            "recent":         "recent",
+            "most_purchased": "most_purchased",
+            "best_rated":     "best_rated",
+            "price_asc":      "price_asc",
+            "price_desc":     "price_desc"
+        };
+        if (inter.sort_by && sortByMap[inter.sort_by]) {
+            sortSelect.value = sortByMap[inter.sort_by];
+            const sortLabels = {
+                "recent":         "Más recientes",
+                "most_purchased": "Más vendidos",
+                "best_rated":     "Mejor calificados",
+                "price_asc":      "Menor precio",
+                "price_desc":     "Mayor precio"
+            };
+            addTag(`Ordenado por: ${sortLabels[inter.sort_by]}`, "arrow-up-down");
+        } else {
+            sortSelect.value = "relevance";
         }
         
         // Render results
@@ -614,6 +854,12 @@ function renderProductsGrid() {
         sorted.sort((a, b) => b.price - a.price);
     } else if (sortVal === "stock_desc") {
         sorted.sort((a, b) => b.stock - a.stock);
+    } else if (sortVal === "recent") {
+        sorted.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    } else if (sortVal === "most_purchased") {
+        sorted.sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0));
+    } else if (sortVal === "best_rated") {
+        sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     }
     
     if (sorted.length === 0) {
@@ -633,6 +879,14 @@ function renderProductsGrid() {
         const stockText = isOutOfStock ? "Agotado" : `Disponibles: ${prod.stock}`;
         const stockClass = isOutOfStock ? "badge-outline" : "badge-success";
         
+        const ratingVal = prod.rating || 0;
+        const ratingCount = prod.rating_count || 0;
+        const salesCount = prod.sales_count || 0;
+        let starsHtml = "";
+        for (let i = 1; i <= 5; i++) {
+            starsHtml += `<span style="color: ${i <= Math.round(ratingVal) ? '#eab308' : 'rgba(255,255,255,0.2)'}; font-size: 0.85rem;">★</span>`;
+        }
+        
         return `
             <div class="product-card glass-card">
                 <div class="product-image-container">
@@ -642,6 +896,13 @@ function renderProductsGrid() {
                 <div class="product-info">
                     <a href="#store/${prod.store_id}" class="product-store-link">${prod.store_name || 'Tienda Oficial'}</a>
                     <h4 class="product-name" title="${prod.name}">${prod.name}</h4>
+                    
+                    <div style="display:flex; align-items:center; gap:0.25rem; margin-bottom:0.4rem; flex-wrap: wrap;">
+                        ${starsHtml}
+                        <span style="font-size:0.75rem; color:#9ca3af; margin-right: 0.5rem;">(${ratingVal.toFixed(1)} / ${ratingCount})</span>
+                        <span class="badge badge-outline" style="font-size:0.65rem; color:#60a5fa; border-color:#60a5fa; text-transform:none; padding:0.1rem 0.4rem; margin-left:auto;">${salesCount} vendidos</span>
+                    </div>
+
                     <p class="product-desc">${prod.description || 'Sin descripción detallada.'}</p>
                     
                     <!-- Dynamic rendering of sizes or specs if available -->
@@ -650,19 +911,35 @@ function renderProductsGrid() {
                         ${prod.color ? `<span class="badge badge-outline" style="font-size:0.65rem; color:${prod.color}">${prod.color}</span>` : ''}
                         ${prod.size ? `<span class="badge badge-outline" style="font-size:0.65rem;">Talla: ${prod.size}</span>` : ''}
                     </div>
-
-                    <div class="product-card-footer">
-                        <span class="product-price">$${prod.price.toFixed(2)}</span>
+ 
+                    <div class="product-card-footer" style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                        <span class="product-price" style="flex: 1 1 100%; margin-bottom: 0.2rem; font-size: 1.3rem;">$${prod.price.toFixed(2)}</span>
                         <a href="https://wa.me/${prod.store_phone || '59170000000'}?text=Hola,%20estoy%20interesado%20en%20el%20producto%20${encodeURIComponent(prod.name)}%20de%20tu%20tienda%20SucreShop." 
-                           target="_blank" class="btn btn-outline btn-sm">
+                           target="_blank" class="btn btn-outline btn-sm" style="flex: 1;">
                            <i data-lucide="message-square" style="width:14px;height:14px;margin-right:0.25rem;"></i> Consultar
                         </a>
+                        <button class="btn btn-primary btn-sm btn-reserve-product" data-id="${prod.id}" style="flex: 1;" ${isOutOfStock ? 'disabled' : ''}>
+                           ${state.token ? 'Comprar' : 'Iniciar Sesión'}
+                        </button>
                     </div>
                 </div>
             </div>
         `;
     }).join("");
     
+    // Bind Buy Button actions
+    document.querySelectorAll(".btn-reserve-product").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            if (!state.token) {
+                showToast("Debes iniciar sesión para comprar.", "warning");
+                openAuthModal("login");
+                return;
+            }
+            const id = parseInt(e.target.dataset.id);
+            openCheckoutModal(id);
+        });
+    });
+
     if (window.lucide) lucide.createIcons();
 }
 
@@ -681,6 +958,18 @@ async function loadStoreProfile(storeId) {
         document.getElementById("store-view-address").innerHTML = `<i data-lucide="map-pin"></i> Dirección: ${store.address || "Sucre, Bolivia"}`;
         document.getElementById("store-view-phone").innerHTML = `<i data-lucide="phone"></i> WhatsApp/Tlf: ${store.phone || "No especificado"}`;
         document.getElementById("store-view-logo").src = store.logo_url || "/uploads/default_logo.png";
+        
+        // Store Rating
+        const storeRating = store.rating || 0;
+        const storeRatingCount = store.rating_count || 0;
+        let storeStarsHtml = "";
+        for (let i = 1; i <= 5; i++) {
+            storeStarsHtml += `<span style="color: ${i <= Math.round(storeRating) ? '#eab308' : 'rgba(255,255,255,0.2)'}; font-size: 1rem;">★</span>`;
+        }
+        document.getElementById("store-view-rating").innerHTML = `
+            ${storeStarsHtml}
+            <span style="color:#9ca3af; font-size:0.85rem;">${storeRating.toFixed(1)} (${storeRatingCount} calificaciones)</span>
+        `;
         
         // Web Link
         const webLink = document.getElementById("store-view-web");
@@ -733,6 +1022,13 @@ async function loadStoreProfile(storeId) {
                 const isOutOfStock = prod.stock <= 0;
                 const stockText = isOutOfStock ? "Agotado" : `En Stock: ${prod.stock}`;
                 const stockClass = isOutOfStock ? "badge-outline" : "badge-success";
+                const ratingVal = prod.rating || 0;
+                const ratingCount = prod.rating_count || 0;
+                const salesCount = prod.sales_count || 0;
+                let starsHtml = "";
+                for (let i = 1; i <= 5; i++) {
+                    starsHtml += `<span style="color:${i <= Math.round(ratingVal) ? '#eab308' : 'rgba(255,255,255,0.2)'}; font-size:0.85rem;">★</span>`;
+                }
                 
                 return `
                     <div class="product-card glass-card">
@@ -743,6 +1039,11 @@ async function loadStoreProfile(storeId) {
                         <div class="product-info">
                             <span class="product-store-link">${store.name}</span>
                             <h4 class="product-name" title="${prod.name}">${prod.name}</h4>
+                            <div style="display:flex; align-items:center; gap:0.25rem; margin-bottom:0.4rem; flex-wrap:wrap;">
+                                ${starsHtml}
+                                <span style="font-size:0.75rem; color:#9ca3af; margin-right:0.4rem;">(${ratingVal.toFixed(1)} / ${ratingCount})</span>
+                                <span class="badge badge-outline" style="font-size:0.65rem; color:#60a5fa; border-color:#60a5fa; text-transform:none; padding:0.1rem 0.4rem; margin-left:auto;">${salesCount} vendidos</span>
+                            </div>
                             <p class="product-desc">${prod.description || 'Sin descripción detallada.'}</p>
                             
                             <div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom: 0.8rem;">
@@ -751,17 +1052,33 @@ async function loadStoreProfile(storeId) {
                                 ${prod.size ? `<span class="badge badge-outline" style="font-size:0.65rem;">Talla: ${prod.size}</span>` : ''}
                             </div>
 
-                            <div class="product-card-footer">
-                                <span class="product-price">$${prod.price.toFixed(2)}</span>
+                            <div class="product-card-footer" style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                                <span class="product-price" style="flex:1 1 100%; margin-bottom:0.2rem; font-size:1.3rem;">$${prod.price.toFixed(2)}</span>
                                 <a href="https://wa.me/${store.phone || '59170000000'}?text=Hola,%20estoy%20interesado%20en%20el%20producto%20${encodeURIComponent(prod.name)}%20visto%20en%20SucreShop." 
-                                   target="_blank" class="btn btn-outline btn-sm">
+                                   target="_blank" class="btn btn-outline btn-sm" style="flex:1;">
                                    <i data-lucide="message-square" style="width:14px;height:14px;margin-right:0.25rem;"></i> Consultar
                                 </a>
+                                <button class="btn btn-primary btn-sm btn-reserve-product" data-id="${prod.id}" style="flex:1;" ${isOutOfStock ? 'disabled' : ''}>
+                                    ${state.token ? 'Comprar' : 'Iniciar Sesión'}
+                                </button>
                             </div>
                         </div>
                     </div>
                 `;
             }).join("");
+            
+            // Bind buy buttons inside store profile
+            productsGrid.querySelectorAll(".btn-reserve-product").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    if (!state.token) {
+                        showToast("Debes iniciar sesión para comprar.", "warning");
+                        openAuthModal("login");
+                        return;
+                    }
+                    const id = parseInt(e.target.dataset.id);
+                    openCheckoutModal(id);
+                });
+            });
             if (window.lucide) lucide.createIcons();
         };
         
@@ -840,8 +1157,9 @@ async function loadStoreDashboard() {
         
         if (window.lucide) lucide.createIcons();
         
-        // Load Catalog & Edit Profile Forms
+        // Load Catalog, Requests & Edit Profile Forms
         loadDashboardCatalog();
+        loadStoreRequests();
         loadDashboardProfileForm(storeProfile);
         
     } catch (err) {
@@ -866,6 +1184,11 @@ function setupDashboardTabs() {
             // Toggle tab content
             document.querySelectorAll(".dash-tab-content").forEach(content => content.classList.add("hidden"));
             document.getElementById(`tab-${targetTab}`).classList.remove("hidden");
+
+            // Load requests when switching to that tab
+            if (targetTab === "requests") {
+                loadStoreRequests();
+            }
         });
     });
 }
@@ -935,6 +1258,129 @@ async function loadDashboardCatalog() {
         
     } catch (err) {
         tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:hsl(var(--danger));">Error al cargar catálogo: ${err.message}</td></tr>`;
+    }
+}
+
+async function loadStoreRequests() {
+    const container = document.getElementById("requests-list-container");
+    container.innerHTML = `<div style="text-align:center; padding:2rem;"><i data-lucide="loader" class="animate-spin"></i> Cargando solicitudes...</div>`;
+    if (window.lucide) lucide.createIcons();
+
+    try {
+        const requests = await api.getStoreRequests();
+
+        if (requests.length === 0) {
+            container.innerHTML = `<div class="glass-card" style="text-align:center; padding:3rem; color:hsl(var(--text-muted));">
+                <i data-lucide="inbox" style="width:40px;height:40px;margin-bottom:1rem;opacity:0.4;"></i>
+                <p>No tienes solicitudes de compra pendientes.</p>
+            </div>`;
+            if (window.lucide) lucide.createIcons();
+            return;
+        }
+
+        container.innerHTML = requests.map(req => {
+            const statusColors = {
+                solicitado: "badge-warning",
+                comprado: "badge-success",
+                entregado: "badge-purple",
+                rechazado: "badge-outline"
+            };
+            const statusLabels = {
+                solicitado: "Solicitado",
+                comprado: "Comprado",
+                entregado: "Entregado",
+                rechazado: "Rechazado"
+            };
+
+            const paymentIcons = { card: "credit-card", qr: "smartphone" };
+            const paymentLabels = { card: "Tarjeta", qr: "QR" };
+
+            return `
+            <div class="glass-card" style="margin-bottom: 1rem; padding: 1rem; display: flex; gap: 1rem; align-items: flex-start;">
+                <img src="${req.product_image || '/uploads/default_product.png'}" style="width: 70px; height: 70px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0;">
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.3rem;">
+                        <h4 style="font-size:1rem; font-weight:600;">${req.product_name || 'Producto'}</h4>
+                        <span class="badge ${statusColors[req.status] || 'badge-outline'}">${statusLabels[req.status] || req.status}</span>
+                        <span style="font-size:0.8rem; color:#10b981; font-weight:600;">$${req.product_price?.toFixed(2)}</span>
+                    </div>
+                    <div style="font-size:0.85rem; color:hsl(var(--text-muted)); margin-bottom:0.3rem; display:flex; flex-wrap:wrap; gap:0.5rem;">
+                        <span><strong>Comprador:</strong> ${req.buyer_name}</span>
+                        <span><strong>Email:</strong> ${req.buyer_email}</span>
+                    </div>
+                    <div style="font-size:0.8rem; color:hsl(var(--text-muted)); margin-bottom:0.3rem;">
+                        <i data-lucide="${paymentIcons[req.payment_method] || 'credit-card'}" style="width:12px;height:12px;"></i>
+                        Pago: ${paymentLabels[req.payment_method] || req.payment_method}
+                        ${req.product_key ? ` · <strong>Clave:</strong> <span style="font-family:monospace;color:#10b981;">${req.product_key}</span>` : ''}
+                    </div>
+                    <div style="font-size:0.75rem; color:hsl(var(--text-muted));">
+                        ${new Date(req.created_at).toLocaleDateString('es-BO', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' })}
+                    </div>
+                    ${req.status === 'solicitado' ? `
+                    <div style="display:flex; gap:0.5rem; margin-top:0.8rem;">
+                        <button class="btn btn-primary btn-sm btn-confirm-request" data-id="${req.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">
+                            <i data-lucide="check" style="width:14px;height:14px;"></i> Confirmar Venta
+                        </button>
+                        <button class="btn btn-danger btn-sm btn-reject-request" data-id="${req.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">
+                            <i data-lucide="x" style="width:14px;height:14px;"></i> Rechazar
+                        </button>
+                    </div>` : ''}
+                    ${req.status === 'comprado' ? `
+                    <div style="display:flex; gap:0.5rem; margin-top:0.8rem;">
+                        <button class="btn btn-success btn-sm btn-deliver-request" data-id="${req.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">
+                            <i data-lucide="package" style="width:14px;height:14px;"></i> Marcar como Entregado
+                        </button>
+                    </div>` : ''}
+                </div>
+            </div>`;
+        }).join("");
+
+        document.querySelectorAll(".btn-confirm-request").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                const reqId = parseInt(e.currentTarget.dataset.id);
+                if (!confirm("¿Confirmar esta venta? Se reducirá el stock del producto automáticamente.")) return;
+                try {
+                    await api.confirmRequest(reqId);
+                    showToast("Venta confirmada. Stock actualizado.", "success");
+                    loadStoreRequests();
+                } catch (err) {
+                    showToast("Error: " + err.message, "error");
+                }
+            });
+        });
+
+        document.querySelectorAll(".btn-deliver-request").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                const reqId = parseInt(e.currentTarget.dataset.id);
+                if (!confirm("¿Marcar este producto como entregado al comprador?")) return;
+                try {
+                    await api.deliverRequest(reqId);
+                    showToast("Producto marcado como entregado.", "success");
+                    loadStoreRequests();
+                } catch (err) {
+                    showToast("Error: " + err.message, "error");
+                }
+            });
+        });
+
+        document.querySelectorAll(".btn-reject-request").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                const reqId = parseInt(e.currentTarget.dataset.id);
+                if (!confirm("¿Rechazar esta solicitud?")) return;
+                try {
+                    await api.rejectRequest(reqId);
+                    showToast("Solicitud rechazada.");
+                    loadStoreRequests();
+                } catch (err) {
+                    showToast("Error: " + err.message, "error");
+                }
+            });
+        });
+
+        if (window.lucide) lucide.createIcons();
+
+    } catch (err) {
+        container.innerHTML = `<div style="text-align:center; padding:2rem; color:hsl(var(--danger));">Error al cargar solicitudes: ${err.message}</div>`;
     }
 }
 
@@ -1228,6 +1674,167 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.add("hidden");
+    }
+}
+
+// ==========================================================================
+// 13. CHECKOUT & RESERVATION MODAL FLOW
+// ==========================================================================
+
+// Tracks the product being reserved so we can rate it after purchase
+let _checkoutProductId = null;
+let _checkoutStoreId = null;
+let _checkoutProductRating = 0;
+let _checkoutStoreRating = 0;
+
+function openCheckoutModal(productId) {
+    let prod = state.products.find(p => p.id === productId);
+    if (!prod && state.myProducts) {
+        prod = state.myProducts.find(p => p.id === productId);
+    }
+    if (!prod) {
+        showToast("No se encontró el producto.", "error");
+        return;
+    }
+
+    _checkoutProductId = productId;
+    _checkoutStoreId = prod.store_id;
+    _checkoutProductRating = 0;
+    _checkoutStoreRating = 0;
+
+    document.getElementById("checkout-prod-image").src = prod.image_url || "/uploads/default_product.png";
+    document.getElementById("checkout-prod-name").textContent = prod.name;
+    document.getElementById("checkout-prod-store").textContent = prod.store_name || "Tienda Oficial";
+    document.getElementById("checkout-prod-price").textContent = `$${prod.price.toFixed(2)}`;
+    document.getElementById("checkout-step-user-name").textContent = state.user?.full_name || "Comprador";
+
+    document.getElementById("checkout-step-confirm").classList.remove("hidden");
+    document.getElementById("checkout-step-qr").classList.add("hidden");
+
+    _resetStarGroup("checkout-product-stars");
+    _resetStarGroup("checkout-store-stars");
+
+    document.getElementById("checkout-modal").classList.remove("hidden");
+
+    // Bind payment buttons
+    const payCard = document.getElementById("btn-pay-card");
+    const newPayCard = payCard.cloneNode(true);
+    payCard.parentNode.replaceChild(newPayCard, payCard);
+    newPayCard.addEventListener("click", () => _handlePayment(productId, "card"));
+
+    const payQr = document.getElementById("btn-pay-qr");
+    const newPayQr = payQr.cloneNode(true);
+    payQr.parentNode.replaceChild(newPayQr, payQr);
+    newPayQr.addEventListener("click", () => _handlePayment(productId, "qr"));
+
+    const submitRatingsBtn = document.getElementById("btn-submit-ratings");
+    const newSubmitBtn = submitRatingsBtn.cloneNode(true);
+    submitRatingsBtn.parentNode.replaceChild(newSubmitBtn, submitRatingsBtn);
+    newSubmitBtn.addEventListener("click", _handleSubmitRatings);
+
+    const doneBtn = document.getElementById("btn-close-checkout-done");
+    const newDoneBtn = doneBtn.cloneNode(true);
+    doneBtn.parentNode.replaceChild(newDoneBtn, doneBtn);
+    newDoneBtn.addEventListener("click", () => closeModal("checkout-modal"));
+
+    _setupStarInput("checkout-product-stars", (val) => { _checkoutProductRating = val; });
+    _setupStarInput("checkout-store-stars", (val) => { _checkoutStoreRating = val; });
+
+    if (window.lucide) lucide.createIcons();
+}
+
+function _setupStarInput(containerId, onSelect) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const stars = container.querySelectorAll("span");
+
+    stars.forEach(star => {
+        const val = parseInt(star.dataset.val);
+
+        star.addEventListener("mouseover", () => {
+            stars.forEach(s => {
+                s.style.color = parseInt(s.dataset.val) <= val ? "#eab308" : "rgba(255,255,255,0.2)";
+            });
+        });
+
+        star.addEventListener("mouseleave", () => {
+            const selected = parseInt(container.dataset.selected || "0");
+            stars.forEach(s => {
+                s.style.color = parseInt(s.dataset.val) <= selected ? "#eab308" : "rgba(255,255,255,0.2)";
+            });
+        });
+
+        star.addEventListener("click", () => {
+            container.dataset.selected = val;
+            stars.forEach(s => {
+                s.style.color = parseInt(s.dataset.val) <= val ? "#eab308" : "rgba(255,255,255,0.2)";
+            });
+            onSelect(val);
+        });
+    });
+}
+
+function _resetStarGroup(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.dataset.selected = "0";
+    container.querySelectorAll("span").forEach(s => {
+        s.style.color = "rgba(255,255,255,0.2)";
+    });
+}
+
+async function _handlePayment(productId, method) {
+    try {
+        const result = await api.requestProduct(productId, method);
+
+        document.getElementById("checkout-step-confirm").classList.add("hidden");
+        document.getElementById("checkout-step-qr").classList.remove("hidden");
+        document.getElementById("checkout-key-value").textContent = result.product_key;
+
+        showToast("¡Compra registrada! Tu clave: " + result.product_key, "success");
+        if (window.lucide) lucide.createIcons();
+
+    } catch (err) {
+        showToast("Error al procesar compra: " + err.message, "error");
+    }
+}
+
+async function _handleSubmitRatings() {
+    if (_checkoutProductRating === 0 && _checkoutStoreRating === 0) {
+        showToast("Selecciona al menos una estrella para calificar.", "warning");
+        return;
+    }
+
+    const btn = document.getElementById("btn-submit-ratings");
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader" class="animate-spin"></i> Enviando...`;
+    if (window.lucide) lucide.createIcons();
+
+    try {
+        const tasks = [];
+        if (_checkoutProductRating > 0 && _checkoutProductId) {
+            tasks.push(api.rateProduct(_checkoutProductId, _checkoutProductRating));
+        }
+        if (_checkoutStoreRating > 0 && _checkoutStoreId) {
+            tasks.push(api.rateStore(_checkoutStoreId, _checkoutStoreRating));
+        }
+        await Promise.all(tasks);
+
+        showToast("¡Gracias por tu calificación! Tu opinión ayuda a la comunidad.", "success");
+        closeModal("checkout-modal");
+
+        // Reload current product list to reflect updated ratings
+        if (document.getElementById("search-input").value.trim()) {
+            triggerAISearch(document.getElementById("search-input").value.trim());
+        } else {
+            loadProductsList();
+        }
+    } catch (err) {
+        showToast("Error al enviar calificación: " + err.message, "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = "Enviar Calificaciones";
+        if (window.lucide) lucide.createIcons();
     }
 }
 

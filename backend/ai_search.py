@@ -184,6 +184,20 @@ def parse_query(raw_query: str) -> Dict[str, Any]:
         specs["cultivo"] = "orgánico"
         detected_category = "Comida"
 
+    # 7.5. Detect Sorting Intent
+    sort_by = None
+    query_norm = normalize_text(raw_query)
+    if any(kw in query_norm for kw in ["reciente", "recientes", "nuevo", "nuevos", "nueva", "nuevas", "ultimo", "ultimos", "ultima", "ultimas", "publicacion", "creado", "creados"]):
+        sort_by = "recent"
+    elif any(kw in query_norm for kw in ["mas vendido", "mas vendidos", "mas comprado", "mas comprados", "vendido", "vendidos", "comprado", "comprados", "popular", "populares", "ventas"]):
+        sort_by = "most_purchased"
+    elif any(kw in query_norm for kw in ["mejor calificado", "mejor calificados", "mejor valorado", "mejor valorados", "mejor calificada", "mejor calificadas", "puntuacion", "estrellas", "estrella", "calificacion", "calificaciones"]):
+        sort_by = "best_rated"
+    elif any(kw in query_norm for kw in ["barato", "baratos", "barata", "baratas", "economico", "economicos", "economica", "economicas", "precio bajo", "precios bajos", "menor precio", "menores precios"]):
+        sort_by = "price_asc"
+    elif any(kw in query_norm for kw in ["caro", "caros", "cara", "caras", "costoso", "costosos", "costosa", "costosas", "mayor precio", "mayores precios", "precio alto", "precios altos"]):
+        sort_by = "price_desc"
+
     # 8. Build Explanation
     explanations = []
     if detected_category:
@@ -205,8 +219,17 @@ def parse_query(raw_query: str) -> Dict[str, Any]:
         explanations.append(f"especificación {key}: **{val}**")
     if in_stock_only:
         explanations.append("solo productos **en stock**")
-    if is_budget:
+    
+    if sort_by == "recent":
+        explanations.append("ordenando por **más recientes**")
+    elif sort_by == "most_purchased":
+        explanations.append("ordenando por **más vendidos**")
+    elif sort_by == "best_rated":
+        explanations.append("ordenando por **mejor calificados**")
+    elif sort_by == "price_asc" or is_budget:
         explanations.append("ordenando por **menor precio**")
+    elif sort_by == "price_desc":
+        explanations.append("ordenando por **mayor precio**")
 
     if not explanations:
         explanation = "Busqué coincidencias generales por texto para tu consulta."
@@ -224,5 +247,6 @@ def parse_query(raw_query: str) -> Dict[str, Any]:
         "specs": specs,
         "in_stock_only": in_stock_only,
         "is_budget": is_budget,
-        "explanation": explanation
+        "explanation": explanation,
+        "sort_by": sort_by
     }

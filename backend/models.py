@@ -1,5 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, JSON
+import uuid
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, JSON, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from backend.database import Base
 
 class User(Base):
@@ -13,6 +15,7 @@ class User(Base):
     
     # Relationships
     stores = relationship("Store", back_populates="owner")
+    purchase_requests = relationship("PurchaseRequest", back_populates="buyer")
 
 class Store(Base):
     __tablename__ = "stores"
@@ -29,6 +32,8 @@ class Store(Base):
     twitter_url = Column(String, nullable=True)
     status = Column(String, default="pending")
     status_reason = Column(String, nullable=True)
+    rating = Column(Float, default=0.0)
+    rating_count = Column(Integer, default=0)
     
     # Relationships
     owner = relationship("User", back_populates="stores")
@@ -48,6 +53,25 @@ class Product(Base):
     color = Column(String, nullable=True)
     size = Column(String, nullable=True)
     specs = Column(JSON, nullable=True) # Dictionary of custom specs, e.g. {"RAM": "16GB", "Almacenamiento": "512GB"}
+    created_at = Column(DateTime, server_default=func.now())
+    sales_count = Column(Integer, default=0)
+    rating = Column(Float, default=0.0)
+    rating_count = Column(Integer, default=0)
     
     # Relationships
     store = relationship("Store", back_populates="products")
+    requests = relationship("PurchaseRequest", back_populates="product", cascade="all, delete-orphan")
+
+class PurchaseRequest(Base):
+    __tablename__ = "purchase_requests"
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    buyer_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    status = Column(String, default="solicitado")
+    payment_method = Column(String, nullable=True)
+    product_key = Column(String, unique=True, nullable=False, default=lambda: f"SP-{uuid.uuid4().hex[:8].upper()}-{uuid.uuid4().hex[:4].upper()}")
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    product = relationship("Product", back_populates="requests")
+    buyer = relationship("User", back_populates="purchase_requests")

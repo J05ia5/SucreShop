@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 
 # Token schemas
 class Token(BaseModel):
@@ -56,6 +57,8 @@ class StoreResponse(StoreBase):
     logo_url: Optional[str] = None
     status: str
     status_reason: Optional[str] = None
+    rating: float
+    rating_count: int
     class Config:
         from_attributes = True
 
@@ -91,6 +94,11 @@ class ProductResponse(ProductBase):
     id: int
     store_id: int
     store_name: Optional[str] = None
+    store_phone: Optional[str] = None
+    created_at: datetime
+    sales_count: int
+    rating: float
+    rating_count: int
     class Config:
         from_attributes = True
 
@@ -106,10 +114,34 @@ class AISearchInterpretation(BaseModel):
     specs: Dict[str, Any] = {}
     in_stock_only: bool = False
     explanation: str
+    sort_by: Optional[str] = None
 
 class AISearchResponse(BaseModel):
     interpretation: AISearchInterpretation
     results: List[ProductResponse]
+
+# Purchase Request Schemas
+class PurchaseRequestCreate(BaseModel):
+    payment_method: str = "qr"
+
+class PurchaseRequestResponse(BaseModel):
+    id: int
+    product_id: int
+    product_name: Optional[str] = None
+    product_image: Optional[str] = None
+    product_price: Optional[float] = None
+    store_name: Optional[str] = None
+    store_phone: Optional[str] = None
+    buyer_id: int
+    buyer_name: str
+    buyer_email: str
+    buyer_phone: Optional[str] = None
+    status: str
+    payment_method: Optional[str] = None
+    product_key: str
+    created_at: datetime
+    class Config:
+        from_attributes = True
 
 class AdminActionRequest(BaseModel):
     reason: str

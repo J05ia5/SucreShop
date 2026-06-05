@@ -1,6 +1,7 @@
 import os
 import shutil
 from typing import List, Optional
+from datetime import datetime
 from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -157,9 +158,10 @@ def get_store_products(store_id: int, db: Session = Depends(get_db)):
         
     products = db.query(models.Product).filter(models.Product.store_id == store_id).all()
     
-    # Add store name to schema responses
+    # Add store name and phone to schema responses
     for p in products:
         p.store_name = store.name
+        p.store_phone = store.phone
     return products
 
 
@@ -170,7 +172,9 @@ def get_all_products(
     category: Optional[str] = None,
     brand: Optional[str] = None,
     max_price: Optional[float] = None,
+    min_price: Optional[float] = None,
     in_stock: Optional[bool] = None,
+    min_rating: Optional[float] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(models.Product).join(models.Store).filter(models.Store.status == "approved")
@@ -180,13 +184,18 @@ def get_all_products(
         query = query.filter(models.Product.brand.ilike(f"%{brand}%"))
     if max_price:
         query = query.filter(models.Product.price <= max_price)
+    if min_price:
+        query = query.filter(models.Product.price >= min_price)
     if in_stock:
         query = query.filter(models.Product.stock > 0)
+    if min_rating:
+        query = query.filter(models.Product.rating >= min_rating)
         
     products = query.all()
     for p in products:
         store = db.query(models.Store).filter(models.Store.id == p.store_id).first()
         p.store_name = store.name if store else "Tienda Desconocida"
+        p.store_phone = store.phone if store else None
     return products
 
 @app.get("/api/search", response_model=schemas.AISearchResponse)
@@ -268,8 +277,17 @@ def ai_search(query: str, db: Session = Depends(get_db)):
             filtered_products.append(product)
             
     # Apply sorting
-    if interpretation["is_budget"]:
+    sort_val = interpretation.get("sort_by")
+    if sort_val == "recent":
+        filtered_products.sort(key=lambda p: p.created_at or datetime.min, reverse=True)
+    elif sort_val == "most_purchased":
+        filtered_products.sort(key=lambda p: p.sales_count or 0, reverse=True)
+    elif sort_val == "best_rated":
+        filtered_products.sort(key=lambda p: p.rating or 0.0, reverse=True)
+    elif sort_val == "price_asc" or interpretation["is_budget"]:
         filtered_products.sort(key=lambda p: p.price)
+    elif sort_val == "price_desc":
+        filtered_products.sort(key=lambda p: p.price, reverse=True)
         
     response_results = []
     for p in filtered_products:
@@ -279,6 +297,7 @@ def ai_search(query: str, db: Session = Depends(get_db)):
                 id=p.id,
                 store_id=p.store_id,
                 store_name=store.name if store else "Tienda Desconocida",
+                store_phone=store.phone if store else None,
                 name=p.name,
                 description=p.description,
                 price=p.price,
@@ -288,7 +307,11 @@ def ai_search(query: str, db: Session = Depends(get_db)):
                 color=p.color,
                 size=p.size,
                 specs=p.specs,
-                image_url=p.image_url
+                image_url=p.image_url,
+                created_at=p.created_at,
+                sales_count=p.sales_count,
+                rating=p.rating,
+                rating_count=p.rating_count
             )
         )
         
@@ -296,6 +319,221 @@ def ai_search(query: str, db: Session = Depends(get_db)):
         "interpretation": interpretation,
         "results": response_results
     }
+
+
+# --- INTERACTIVE RATING & TRANSACTION ENDPOINTS ---
+
+@app.post("/api/products/{product_id}/rate")
+def rate_product(
+    product_id: int,
+    rating: float = Form(...),
+    db: Session = Depends(get_db)
+):
+    if rating < 1.0 or rating > 5.0:
+        raise HTTPException(status_code=400, detail="La calificación debe estar entre 1 y 5.")
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="El producto no existe.")
+        
+    current_sum = product.rating * product.rating_count
+    product.rating_count += 1
+    product.rating = round((current_sum + rating) / product.rating_count, 2)
+    
+    db.commit()
+    db.refresh(product)
+    return {
+        "message": "Producto calificado exitosamente.",
+        "rating": product.rating,
+        "rating_count": product.rating_count
+    }
+
+@app.post("/api/stores/{store_id}/rate")
+def rate_store(
+    store_id: int,
+    rating: float = Form(...),
+    db: Session = Depends(get_db)
+):
+    if rating < 1.0 or rating > 5.0:
+        raise HTTPException(status_code=400, detail="La calificación debe estar entre 1 y 5.")
+    store = db.query(models.Store).filter(models.Store.id == store_id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="La tienda no existe.")
+        
+    current_sum = store.rating * store.rating_count
+    store.rating_count += 1
+    store.rating = round((current_sum + rating) / store.rating_count, 2)
+    
+    db.commit()
+    db.refresh(store)
+    return {
+        "message": "Tienda calificada exitosamente.",
+        "rating": store.rating,
+        "rating_count": store.rating_count
+    }
+
+@app.post("/api/products/{product_id}/purchase")
+def purchase_product(
+    product_id: int,
+    db: Session = Depends(get_db)
+):
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="El producto no existe.")
+    if product.stock <= 0:
+        raise HTTPException(status_code=400, detail="El producto está agotado.")
+        
+    product.stock -= 1
+    product.sales_count += 1
+    
+    db.commit()
+    db.refresh(product)
+    return {
+        "message": "Reserva confirmada con éxito.",
+        "stock": product.stock,
+        "sales_count": product.sales_count
+    }
+
+
+# --- PURCHASE REQUEST ENDPOINTS ---
+
+@app.post("/api/products/{product_id}/request", response_model=schemas.PurchaseRequestResponse, status_code=status.HTTP_201_CREATED)
+def create_purchase_request(
+    product_id: int,
+    req: schemas.PurchaseRequestCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="El producto no existe.")
+    if product.stock <= 0:
+        raise HTTPException(status_code=400, detail="El producto está agotado.")
+
+    store = db.query(models.Store).filter(models.Store.id == product.store_id).first()
+
+    new_request = models.PurchaseRequest(
+        product_id=product_id,
+        buyer_id=current_user.id,
+        payment_method=req.payment_method,
+        status="solicitado"
+    )
+    db.add(new_request)
+    db.commit()
+    db.refresh(new_request)
+
+    new_request.product_name = product.name
+    new_request.product_image = product.image_url
+    new_request.product_price = product.price
+    new_request.store_name = store.name if store else None
+    new_request.store_phone = store.phone if store else None
+    new_request.buyer_name = current_user.full_name
+    new_request.buyer_email = current_user.email
+    return new_request
+
+@app.get("/api/stores/me/requests", response_model=List[schemas.PurchaseRequestResponse])
+def get_store_requests(
+    db: Session = Depends(get_db),
+    current_store: models.Store = Depends(auth.get_current_store)
+):
+    requests = (
+        db.query(models.PurchaseRequest)
+        .join(models.Product)
+        .filter(models.Product.store_id == current_store.id)
+        .order_by(models.PurchaseRequest.created_at.desc())
+        .all()
+    )
+    for r in requests:
+        r.product_name = r.product.name
+        r.product_image = r.product.image_url
+        r.product_price = r.product.price
+        r.store_name = current_store.name
+        r.store_phone = current_store.phone
+        r.buyer_name = r.buyer.full_name
+        r.buyer_email = r.buyer.email
+        r.buyer_phone = None
+    return requests
+
+@app.put("/api/requests/{request_id}/confirm", response_model=schemas.PurchaseRequestResponse)
+def confirm_purchase_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+    current_store: models.Store = Depends(auth.get_current_store)
+):
+    req = db.query(models.PurchaseRequest).filter(models.PurchaseRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="La solicitud no existe.")
+    if req.product.store_id != current_store.id:
+        raise HTTPException(status_code=403, detail="No tienes permiso para modificar esta solicitud.")
+    if req.status != "solicitado":
+        raise HTTPException(status_code=400, detail=f"La solicitud está en estado '{req.status}', no se puede confirmar.")
+
+    product = req.product
+    if product.stock <= 0:
+        raise HTTPException(status_code=400, detail="El producto ya no tiene stock disponible.")
+
+    product.stock -= 1
+    product.sales_count += 1
+    req.status = "comprado"
+    db.commit()
+    db.refresh(req)
+
+    req.product_name = product.name
+    req.product_image = product.image_url
+    req.product_price = product.price
+    req.store_name = current_store.name
+    req.store_phone = current_store.phone
+    req.buyer_name = req.buyer.full_name
+    req.buyer_email = req.buyer.email
+    return req
+
+@app.put("/api/requests/{request_id}/deliver", response_model=schemas.PurchaseRequestResponse)
+def deliver_purchase_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+    current_store: models.Store = Depends(auth.get_current_store)
+):
+    req = db.query(models.PurchaseRequest).filter(models.PurchaseRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="La solicitud no existe.")
+    if req.product.store_id != current_store.id:
+        raise HTTPException(status_code=403, detail="No tienes permiso para modificar esta solicitud.")
+    if req.status != "comprado":
+        raise HTTPException(status_code=400, detail=f"La solicitud está en estado '{req.status}', solo se puede entregar si está 'comprado'.")
+
+    req.status = "entregado"
+    db.commit()
+    db.refresh(req)
+
+    req.product_name = req.product.name
+    req.product_image = req.product.image_url
+    req.product_price = req.product.price
+    req.store_name = current_store.name
+    req.store_phone = current_store.phone
+    req.buyer_name = req.buyer.full_name
+    req.buyer_email = req.buyer.email
+    return req
+
+@app.put("/api/requests/{request_id}/reject", response_model=schemas.PurchaseRequestResponse)
+def reject_purchase_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+    current_store: models.Store = Depends(auth.get_current_store)
+):
+    req = db.query(models.PurchaseRequest).filter(models.PurchaseRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="La solicitud no existe.")
+    if req.product.store_id != current_store.id:
+        raise HTTPException(status_code=403, detail="No tienes permiso para rechazar esta solicitud.")
+    if req.status != "solicitado":
+        raise HTTPException(status_code=400, detail=f"No se puede rechazar una solicitud en estado '{req.status}'.")
+
+    req.status = "rechazado"
+    db.commit()
+    db.refresh(req)
+
+    req.buyer_name = req.buyer.full_name
+    req.buyer_email = req.buyer.email
+    return req
 
 
 # --- STORE OWNER MANAGEMENT ENDPOINTS ---

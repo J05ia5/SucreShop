@@ -26,7 +26,7 @@
             <nav class="nav-links" id="main-nav">
                 <a href="#landing" class="nav-item active" data-view="landing">Inicio</a>
                 <a href="#search" class="nav-item" data-view="search">Explorar</a>
-                <a href="#stores" class="nav-item" id="nav-stores-list">Tiendas</a>
+                <a href="#stores" class="nav-item" data-view="stores">Tiendas</a>
             </nav>
 
             <div class="auth-buttons" id="auth-nav-container">
@@ -45,52 +45,46 @@
 
         <!-- 1. LANDING PAGE VIEW -->
         <section id="view-landing" class="view-container">
-            <!-- Hero Section -->
-            <div class="hero">
-                <div class="hero-content">
-                    <span class="badge">Comercio Local Centralizado</span>
-                    <h1 class="hero-title">Todo el comercio de tu ciudad en un solo lugar</h1>
-                    <p class="hero-subtitle">Descubre tiendas oficiales, explora sus catálogos y busca productos de forma inteligente con nuestro asistente de IA local.</p>
-                    
-                    <div class="hero-ctas">
-                        <button class="btn btn-primary btn-lg" id="hero-btn-explore">
-                            <i data-lucide="compass"></i> Descubrir Tiendas
+            <!-- AI Search Bar Hero -->
+            <div class="landing-search-hero">
+                <div class="landing-search-content">
+                    <span class="badge">Búsqueda Inteligente</span>
+                    <h1 class="landing-search-title">Encuentra lo que buscas con IA</h1>
+                    <p class="landing-search-subtitle">Describe lo que necesitas de forma natural y nuestro asistente encontrará los mejores productos para ti.</p>
+                    <div class="landing-search-box glass-card">
+                        <i data-lucide="sparkles" class="ai-spark-icon animate-pulse"></i>
+                        <input type="text" id="landing-search-input" placeholder="Ej: zapatillas nike rojas talla 42 en stock, laptop gamer 16gb ram..." autocomplete="off">
+                        <button id="landing-search-submit" class="btn btn-primary">
+                            <i data-lucide="search"></i> Buscar
                         </button>
-                        <button class="btn btn-secondary btn-lg" id="hero-btn-register-store">
-                            <i data-lucide="store"></i> Registrar mi Negocio
+                    </div>
+                    <!-- AI Insights (shown after search) -->
+                    <div id="landing-ai-insights" class="landing-ai-insights hidden">
+                        <div class="ai-insights-header">
+                            <i data-lucide="brain-circuit"></i>
+                            <span id="landing-ai-explanation"></span>
+                        </div>
+                        <div id="landing-ai-tags" class="landing-ai-tags"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Results Carousel -->
+            <div class="landing-results-section">
+                <div class="landing-results-header">
+                    <h2 id="landing-results-title">Todos los Productos</h2>
+                    <div class="landing-carousel-controls">
+                        <button class="btn btn-outline btn-sm" id="landing-carousel-prev" disabled>
+                            <i data-lucide="chevron-left"></i>
+                        </button>
+                        <span id="landing-carousel-page">1 / 1</span>
+                        <button class="btn btn-outline btn-sm" id="landing-carousel-next">
+                            <i data-lucide="chevron-right"></i>
                         </button>
                     </div>
                 </div>
-
-                <!-- Interactive AI Search Preview card -->
-                <div class="hero-preview">
-                    <div class="glass-card ai-preview-card">
-                        <div class="card-header-status">
-                            <div class="pulse-indicator"></div>
-                            <span class="status-text">Búsqueda Inteligente Demo</span>
-                        </div>
-                        <h3>Prueba el buscador con IA</h3>
-                        <p class="helper-text">Escribe algo natural y observa cómo la IA extrae tus intenciones de búsqueda al instante.</p>
-                        
-                        <div class="interactive-search-box">
-                            <input type="text" id="ai-demo-input" placeholder="Ej: zapatillas nike rojas en stock talla 42..." autocomplete="off">
-                            <button id="ai-demo-submit" class="btn btn-primary btn-icon">
-                                <i data-lucide="sparkles"></i>
-                            </button>
-                        </div>
-
-                        <!-- Real-time parsing results visualization -->
-                        <div class="ai-parsing-viz" id="ai-demo-viz">
-                            <div class="viz-placeholder">Ingresa una consulta para ver el análisis de la IA...</div>
-                            <div class="viz-results hidden">
-                                <div class="viz-item"><span class="viz-label">Categoría:</span> <span class="viz-value" id="viz-cat">-</span></div>
-                                <div class="viz-item"><span class="viz-label">Marca:</span> <span class="viz-value" id="viz-brand">-</span></div>
-                                <div class="viz-item"><span class="viz-label">Filtros:</span> <span class="viz-value" id="viz-filters">-</span></div>
-                                <div class="viz-explanation" id="viz-explain">-</div>
-                                <button class="btn btn-outline btn-sm btn-block" id="viz-search-btn">Buscar este producto real</button>
-                            </div>
-                        </div>
-                    </div>
+                <div class="landing-products-grid" id="landing-products-grid">
+                    <div class="skeleton-loader"></div>
                 </div>
             </div>
 
@@ -132,7 +126,6 @@
                     <p>Visita los perfiles de los comercios verificados y explora sus catálogos oficiales.</p>
                 </div>
                 <div class="stores-grid" id="landing-stores-grid">
-                    <!-- Loaded dynamically via JS -->
                     <div class="skeleton-loader"></div>
                 </div>
             </div>
@@ -151,7 +144,6 @@
                     <button class="btn btn-primary btn-lg" id="benefits-register-btn">Registrar mi Tienda Gratis</button>
                 </div>
                 <div class="benefits-illustration">
-                    <!-- Icon or simple aesthetic UI -->
                     <i data-lucide="trending-up" class="giant-icon"></i>
                 </div>
             </div>
@@ -199,6 +191,9 @@
                                 <option value="relevance">Relevancia / IA</option>
                                 <option value="price_asc">Menor precio</option>
                                 <option value="price_desc">Mayor precio</option>
+                                <option value="recent">Más recientes</option>
+                                <option value="most_purchased">Más vendidos</option>
+                                <option value="best_rated">Mejor calificados</option>
                                 <option value="stock_desc">Mayor disponibilidad</option>
                             </select>
                         </div>
@@ -257,6 +252,28 @@
                     </div>
 
                     <div class="sidebar-section">
+                        <h3>Calificación Mínima</h3>
+                        <div class="filter-options-list" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                            <label class="filter-checkbox-label" style="flex: 1; min-width: 40px; text-align: center;">
+                                <input type="radio" name="filter-rating" value="0" checked style="display:none;">
+                                <span class="rating-badge active" style="display: block; padding: 0.4rem; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500;">Todas</span>
+                            </label>
+                            <label class="filter-checkbox-label" style="flex: 1; min-width: 40px; text-align: center;">
+                                <input type="radio" name="filter-rating" value="4" style="display:none;">
+                                <span class="rating-badge" style="display: block; padding: 0.4rem; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500;">4+ ★</span>
+                            </label>
+                            <label class="filter-checkbox-label" style="flex: 1; min-width: 40px; text-align: center;">
+                                <input type="radio" name="filter-rating" value="3" style="display:none;">
+                                <span class="rating-badge" style="display: block; padding: 0.4rem; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500;">3+ ★</span>
+                            </label>
+                            <label class="filter-checkbox-label" style="flex: 1; min-width: 40px; text-align: center;">
+                                <input type="radio" name="filter-rating" value="2" style="display:none;">
+                                <span class="rating-badge" style="display: block; padding: 0.4rem; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500;">2+ ★</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
                         <h3>Precio Máximo</h3>
                         <div class="price-range-container">
                             <input type="range" id="filter-price-range" min="0" max="2000" step="50" value="2000">
@@ -292,6 +309,8 @@
                             <span class="badge badge-success"><i data-lucide="check"></i> Oficial</span>
                         </div>
                         <p class="store-description" id="store-view-description">Descripción de la tienda...</p>
+                        
+                        <div id="store-view-rating" style="display:flex; align-items:center; gap:0.4rem; margin:0.5rem 0; font-size:0.9rem;"></div>
                         
                         <div class="store-contact-meta">
                             <span id="store-view-address"><i data-lucide="map-pin"></i> Dirección</span>
@@ -340,6 +359,9 @@
                         <button class="dash-menu-item active" data-tab="catalog">
                             <i data-lucide="shopping-bag"></i> Gestionar Catálogo
                         </button>
+                        <button class="dash-menu-item" data-tab="requests">
+                            <i data-lucide="clipboard-list"></i> Solicitudes
+                        </button>
                         <button class="dash-menu-item" data-tab="profile">
                             <i data-lucide="settings"></i> Perfil del Comercio
                         </button>
@@ -387,7 +409,20 @@
                         </div>
                     </div>
 
-                    <!-- TAB 2: STORE PROFILE EDITING -->
+                    <!-- TAB 2: PURCHASE REQUESTS -->
+                    <div id="tab-requests" class="dash-tab-content hidden">
+                        <div class="tab-header">
+                            <div>
+                                <h2>Solicitudes de Productos</h2>
+                                <p>Revisa y administra las solicitudes de compra que recibes de los compradores.</p>
+                            </div>
+                        </div>
+                        <div id="requests-list-container">
+                            <!-- Dynamic -->
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: STORE PROFILE EDITING -->
                     <div id="tab-profile" class="dash-tab-content hidden">
                         <div class="tab-header">
                             <div>
@@ -777,6 +812,110 @@
                 </div>
             </div>
         </div>
+
+        <!-- CHECKOUT & PAYMENT MODAL -->
+        <div id="checkout-modal" class="modal-overlay hidden">
+            <div class="modal-box glass-card" style="max-width: 520px;">
+                <div class="modal-header">
+                    <h3>Comprar Producto</h3>
+                    <button class="btn-close-modal" id="btn-close-checkout-modal">&times;</button>
+                </div>
+                <div class="modal-body" style="margin-top: 1rem; color: white;">
+                    <div id="checkout-product-details" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-md);">
+                        <img id="checkout-prod-image" src="/uploads/default_product.png" alt="Producto" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm);">
+                        <div>
+                            <h4 id="checkout-prod-name" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.2rem;">Nombre del Producto</h4>
+                            <p id="checkout-prod-store" style="font-size: 0.9rem; color: var(--color-purple); margin-bottom: 0.4rem;">Tienda</p>
+                            <p id="checkout-prod-price" style="font-size: 1.2rem; font-weight: 700; color: #10b981;">$0.00</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Payment method selection -->
+                    <div id="checkout-step-confirm">
+                        <p style="margin-bottom: 1.2rem; font-size: 0.9rem; color: #9ca3af;">Selecciona tu método de pago para <strong id="checkout-step-user-name">...</strong></p>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+                            <button id="btn-pay-card" class="btn btn-outline" style="padding:2rem 1rem; display:flex; flex-direction:column; align-items:center; gap:0.8rem; border-radius:var(--radius-md);">
+                                <i data-lucide="credit-card" style="width:36px;height:36px;color:var(--color-purple);"></i>
+                                <span style="font-weight:600;">Pagar con Tarjeta</span>
+                                <span style="font-size:0.75rem;color:hsl(var(--text-muted));">Débito / Crédito</span>
+                            </button>
+                            <button id="btn-pay-qr" class="btn btn-outline" style="padding:2rem 1rem; display:flex; flex-direction:column; align-items:center; gap:0.8rem; border-radius:var(--radius-md);">
+                                <i data-lucide="smartphone" style="width:36px;height:36px;color:#10b981;"></i>
+                                <span style="font-weight:600;">Pagar con QR</span>
+                                <span style="font-size:0.75rem;color:hsl(var(--text-muted));">Escanea con tu banco</span>
+                            </button>
+                        </div>
+                        <div class="modal-footer" style="padding:0;">
+                            <button type="button" class="btn btn-outline" id="btn-cancel-checkout">Cancelar</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Product Key (success) -->
+                    <div id="checkout-step-qr" class="hidden" style="text-align: center;">
+                        <i data-lucide="check-circle" style="width: 60px; height: 60px; color: #10b981; margin: 1rem 0 0.5rem 0;"></i>
+                        <h4 style="font-size: 1.2rem; font-weight: 700; color: #10b981; margin-bottom: 0.3rem;">¡Compra Exitosa!</h4>
+                        <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 1.2rem;">Tu solicitud fue registrada. Guarda esta clave para recoger tu producto:</p>
+                        
+                        <div id="checkout-product-key" style="background:rgba(16,185,129,0.1); border:2px dashed rgba(16,185,129,0.3); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.5rem;">
+                            <p style="font-size:0.7rem; color:#9ca3af; text-transform:uppercase; letter-spacing:1px; margin-bottom:0.3rem;">Clave de Producto</p>
+                            <p id="checkout-key-value" style="font-size:1.6rem; font-weight:800; font-family:monospace; color:#10b981; letter-spacing:3px;">SP-XXXX-XXXX</p>
+                            <p style="font-size:0.75rem; color:#9ca3af; margin-top:0.3rem;">Presenta esta clave al vendedor para verificar tu compra.</p>
+                        </div>
+
+                        <div style="text-align:left; background:rgba(255,255,255,0.03); border-radius:var(--radius-md); padding:0.8rem 1rem; margin-bottom:1.5rem;">
+                            <p style="font-size:0.8rem; color:#9ca3af; margin-bottom:0.2rem;"><strong style="color:var(--text-primary);">¿Qué sigue?</strong> El vendedor recibirá tu solicitud y podrá confirmarla. Una vez confirmada, podrás pasar a recoger tu producto presentando tu clave.</p>
+                        </div>
+                        
+                        <!-- Rate store / product after purchase -->
+                        <div id="checkout-rating-section" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem; text-align: left;">
+                            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.8rem;">¿Te gustaría calificar el producto y la tienda?</h4>
+                            
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label style="font-size: 0.85rem; color: #9ca3af; display: block; margin-bottom: 0.3rem;">Califica el Producto:</label>
+                                <div class="star-rating-input" id="checkout-product-stars" style="display: flex; gap: 0.4rem; font-size: 1.5rem; color: #eab308; cursor: pointer; user-select: none;">
+                                    <span data-val="1">★</span>
+                                    <span data-val="2">★</span>
+                                    <span data-val="3">★</span>
+                                    <span data-val="4">★</span>
+                                    <span data-val="5">★</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 1.5rem;">
+                                <label style="font-size: 0.85rem; color: #9ca3af; display: block; margin-bottom: 0.3rem;">Califica la Tienda:</label>
+                                <div class="star-rating-input" id="checkout-store-stars" style="display: flex; gap: 0.4rem; font-size: 1.5rem; color: #eab308; cursor: pointer; user-select: none;">
+                                    <span data-val="1">★</span>
+                                    <span data-val="2">★</span>
+                                    <span data-val="3">★</span>
+                                    <span data-val="4">★</span>
+                                    <span data-val="5">★</span>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer" style="padding: 0; display: flex; justify-content: flex-end; gap: 0.8rem;">
+                                <button type="button" class="btn btn-primary" id="btn-submit-ratings">Enviar Calificaciones</button>
+                                <button type="button" class="btn btn-outline" id="btn-close-checkout-done">Terminar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. STORES LIST VIEW -->
+        <section id="view-stores" class="view-container hidden">
+            <div class="stores-page-container">
+                <div class="section-container">
+                    <div class="section-header">
+                        <h2>Todas las Tiendas</h2>
+                        <p>Explora las tiendas oficiales registradas en SucreShop.</p>
+                    </div>
+                    <div class="stores-grid" id="stores-list-grid">
+                        <div class="skeleton-loader"></div><div class="skeleton-loader"></div><div class="skeleton-loader"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
     </main>
 
