@@ -153,146 +153,150 @@
         <section id="view-search" class="view-container hidden">
             <div class="search-page-layout">
                 
-                <!-- Main Search Area -->
-                <div class="search-main-content">
-                    <div class="search-bar-wrapper glass-card">
-                        <div class="search-input-container">
-                            <i data-lucide="sparkles" class="ai-spark-icon animate-pulse"></i>
-                            <input type="text" id="search-input" placeholder="Dime qué buscas (Ej: 'computadora barata de 16gb de ram' o 'zapatos rojos en stock')...">
-                            <button id="btn-search-submit" class="btn btn-primary">
-                                <i data-lucide="search"></i> Buscar
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- AI Insights Display -->
-                    <div id="ai-insights-panel" class="ai-insights-container glass-card hidden">
-                        <div class="ai-insights-header">
-                            <div class="ai-header-title">
-                                <i data-lucide="brain-circuit" class="ai-icon"></i>
-                                <h4>Análisis de Intención por IA</h4>
-                            </div>
-                            <span class="badge badge-purple" id="ai-badge-status">Interpretado con éxito</span>
-                        </div>
-                        <p class="ai-explanation-text" id="ai-explanation-content">
-                            Entendí que buscas un producto de la categoría...
-                        </p>
-                        <div class="ai-extracted-tags" id="ai-tags-container">
-                            <!-- JS will inject dynamic filter tags detected -->
-                        </div>
-                    </div>
-
-                    <!-- Products Grid Results -->
-                    <div class="results-header">
-                        <h3 id="results-count-text">Todos los Productos</h3>
-                        <div class="sorting-controls">
-                            <label for="sort-select">Ordenar por:</label>
-                            <select id="sort-select">
-                                <option value="relevance">Relevancia / IA</option>
-                                <option value="price_asc">Menor precio</option>
-                                <option value="price_desc">Mayor precio</option>
-                                <option value="recent">Más recientes</option>
-                                <option value="most_purchased">Más vendidos</option>
-                                <option value="best_rated">Mejor calificados</option>
-                                <option value="stock_desc">Mayor disponibilidad</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="products-grid" id="search-products-grid">
-                        <!-- Loaded dynamically via JS -->
+                <!-- Search Bar -->
+                <div class="search-bar-wrapper glass-card">
+                    <div class="search-input-container">
+                        <i data-lucide="sparkles" class="ai-spark-icon animate-pulse"></i>
+                        <input type="text" id="search-input" placeholder="Dime qué buscas (Ej: 'computadora barata de 16gb de ram' o 'zapatos rojos en stock')...">
+                        <button id="btn-search-submit" class="btn btn-primary">
+                            <i data-lucide="search"></i> Buscar
+                        </button>
                     </div>
                 </div>
 
-                <!-- Left Sidebar Filters -->
-                <aside class="search-sidebar glass-card">
-                    <div class="sidebar-section">
-                        <h3>Categoría</h3>
-                        <div class="filter-options-list" id="filter-categories">
-                            <!-- Load Categories Dynamic Checkboxes -->
-                            <label class="filter-checkbox-label">
-                                <input type="radio" name="filter-category" value="" checked>
-                                <span>Todas</span>
-                            </label>
-                            <label class="filter-checkbox-label">
-                                <input type="radio" name="filter-category" value="Tecnología">
-                                <span>Tecnología</span>
-                            </label>
-                            <label class="filter-checkbox-label">
-                                <input type="radio" name="filter-category" value="Moda">
-                                <span>Moda</span>
-                            </label>
-                            <label class="filter-checkbox-label">
-                                <input type="radio" name="filter-category" value="Comida">
-                                <span>Comida</span>
-                            </label>
-                            <label class="filter-checkbox-label">
-                                <input type="radio" name="filter-category" value="Hogar">
-                                <span>Hogar</span>
-                            </label>
-                            <label class="filter-checkbox-label">
-                                <input type="radio" name="filter-category" value="Deportes">
-                                <span>Deportes</span>
-                            </label>
-                            <label class="filter-checkbox-label">
-                                <input type="radio" name="filter-category" value="Belleza">
-                                <span>Belleza</span>
-                            </label>
+                <!-- AI Insights Display -->
+                <div id="ai-insights-panel" class="ai-insights-container glass-card hidden">
+                    <div class="ai-insights-header">
+                        <div class="ai-header-title">
+                            <i data-lucide="brain-circuit" class="ai-icon"></i>
+                            <h4>Análisis de Intención por IA</h4>
                         </div>
+                        <span class="badge badge-purple" id="ai-badge-status">Interpretado con éxito</span>
                     </div>
+                    <p class="ai-explanation-text" id="ai-explanation-content">
+                        Entendí que buscas un producto de la categoría...
+                    </p>
+                    <div class="ai-extracted-tags" id="ai-tags-container">
+                    </div>
+                </div>
 
-                    <div class="sidebar-section">
-                        <h3>Filtros Rápidos</h3>
-                        <div class="filter-options-list">
-                            <label class="filter-checkbox-label">
-                                <input type="checkbox" id="filter-stock-only">
-                                <span>Solo Disponibles (En Stock)</span>
-                            </label>
+                <!-- Filter Toggle Button -->
+                <button class="btn btn-outline filter-toggle-btn" id="btn-toggle-filters">
+                    <i data-lucide="sliders-horizontal"></i>
+                    <span>Agregar Filtros</span>
+                    <i data-lucide="chevron-down" style="margin-left:auto;"></i>
+                </button>
+
+                <!-- Collapsible Filters Panel -->
+                <div id="search-filters-panel" class="search-filters-panel glass-card hidden">
+                    <div class="search-filters-grid">
+                        <div class="sidebar-section">
+                            <h3>Categoría</h3>
+                            <div class="filter-options-list" id="filter-categories">
+                                <label class="filter-checkbox-label">
+                                    <input type="radio" name="filter-category" value="" checked>
+                                    <span>Todas</span>
+                                </label>
+                                <label class="filter-checkbox-label">
+                                    <input type="radio" name="filter-category" value="Tecnología">
+                                    <span>Tecnología</span>
+                                </label>
+                                <label class="filter-checkbox-label">
+                                    <input type="radio" name="filter-category" value="Moda">
+                                    <span>Moda</span>
+                                </label>
+                                <label class="filter-checkbox-label">
+                                    <input type="radio" name="filter-category" value="Comida">
+                                    <span>Comida</span>
+                                </label>
+                                <label class="filter-checkbox-label">
+                                    <input type="radio" name="filter-category" value="Hogar">
+                                    <span>Hogar</span>
+                                </label>
+                                <label class="filter-checkbox-label">
+                                    <input type="radio" name="filter-category" value="Deportes">
+                                    <span>Deportes</span>
+                                </label>
+                                <label class="filter-checkbox-label">
+                                    <input type="radio" name="filter-category" value="Belleza">
+                                    <span>Belleza</span>
+                                </label>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="sidebar-section">
-                        <h3>Calificación Mínima</h3>
-                        <div class="filter-options-list" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;">
-                            <label class="filter-checkbox-label" style="flex: 1; min-width: 40px; text-align: center;">
-                                <input type="radio" name="filter-rating" value="0" checked style="display:none;">
-                                <span class="rating-badge active" style="display: block; padding: 0.4rem; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500;">Todas</span>
-                            </label>
-                            <label class="filter-checkbox-label" style="flex: 1; min-width: 40px; text-align: center;">
-                                <input type="radio" name="filter-rating" value="4" style="display:none;">
-                                <span class="rating-badge" style="display: block; padding: 0.4rem; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500;">4+ ★</span>
-                            </label>
-                            <label class="filter-checkbox-label" style="flex: 1; min-width: 40px; text-align: center;">
-                                <input type="radio" name="filter-rating" value="3" style="display:none;">
-                                <span class="rating-badge" style="display: block; padding: 0.4rem; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500;">3+ ★</span>
-                            </label>
-                            <label class="filter-checkbox-label" style="flex: 1; min-width: 40px; text-align: center;">
-                                <input type="radio" name="filter-rating" value="2" style="display:none;">
-                                <span class="rating-badge" style="display: block; padding: 0.4rem; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500;">2+ ★</span>
-                            </label>
+                        <div class="sidebar-section">
+                            <h3>Disponibilidad</h3>
+                            <div class="filter-options-list">
+                                <label class="filter-checkbox-label">
+                                    <input type="checkbox" id="filter-stock-only">
+                                    <span>Solo Disponibles (En Stock)</span>
+                                </label>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="sidebar-section">
-                        <h3>Precio Máximo</h3>
-                        <div class="price-range-container">
-                            <input type="range" id="filter-price-range" min="0" max="2000" step="50" value="2000">
-                            <div class="price-labels">
-                                <span>$0</span>
-                                <span id="price-range-value">Hasta $2000</span>
+                        <div class="sidebar-section">
+                            <h3>Calificación Mínima</h3>
+                            <div class="filter-options-list" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                                <label class="filter-checkbox-label" style="flex: 1; min-width: 40px; text-align: center;">
+                                    <input type="radio" name="filter-rating" value="0" checked style="display:none;">
+                                    <span class="rating-badge active" style="display: block; padding: 0.4rem; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500;">Todas</span>
+                                </label>
+                                <label class="filter-checkbox-label" style="flex: 1; min-width: 40px; text-align: center;">
+                                    <input type="radio" name="filter-rating" value="4" style="display:none;">
+                                    <span class="rating-badge" style="display: block; padding: 0.4rem; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500;">4+ ★</span>
+                                </label>
+                                <label class="filter-checkbox-label" style="flex: 1; min-width: 40px; text-align: center;">
+                                    <input type="radio" name="filter-rating" value="3" style="display:none;">
+                                    <span class="rating-badge" style="display: block; padding: 0.4rem; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500;">3+ ★</span>
+                                </label>
+                                <label class="filter-checkbox-label" style="flex: 1; min-width: 40px; text-align: center;">
+                                    <input type="radio" name="filter-rating" value="2" style="display:none;">
+                                    <span class="rating-badge" style="display: block; padding: 0.4rem; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.8rem; font-weight: 500;">2+ ★</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-section">
+                            <h3>Precio Máximo</h3>
+                            <div class="price-range-container">
+                                <input type="range" id="filter-price-range" min="0" max="2000" step="50" value="2000">
+                                <div class="price-labels">
+                                    <span>$0</span>
+                                    <span id="price-range-value">Hasta $2000</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-section">
+                            <h3>Marcas Populares</h3>
+                            <div class="filter-options-list" id="filter-brands-list">
                             </div>
                         </div>
                     </div>
-
-                    <div class="sidebar-section">
-                        <h3>Marcas Populares</h3>
-                        <div class="filter-options-list" id="filter-brands-list">
-                            <!-- JS Injected Brands -->
-                        </div>
+                    <div class="search-filters-actions">
+                        <button class="btn btn-outline btn-sm" id="btn-clear-filters">Limpiar Filtros</button>
                     </div>
+                </div>
 
-                    <button class="btn btn-outline btn-block" id="btn-clear-filters">Limpiar Filtros</button>
-                </aside>
+                <!-- Products Grid Results -->
+                <div class="results-header">
+                    <h3 id="results-count-text">Todos los Productos</h3>
+                    <div class="sorting-controls">
+                        <label for="sort-select">Ordenar por:</label>
+                        <select id="sort-select">
+                            <option value="relevance">Relevancia / IA</option>
+                            <option value="price_asc">Menor precio</option>
+                            <option value="price_desc">Mayor precio</option>
+                            <option value="recent">Más recientes</option>
+                            <option value="most_purchased">Más vendidos</option>
+                            <option value="best_rated">Mejor calificados</option>
+                            <option value="stock_desc">Mayor disponibilidad</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="products-grid" id="search-products-grid">
+                </div>
             </div>
         </section>
 

@@ -288,6 +288,19 @@ function setupGlobalListeners() {
         if (e.key === "Enter") triggerAISearch(searchInput.value.trim());
     });
 
+    // FILTER TOGGLE
+    const toggleBtn = document.getElementById("btn-toggle-filters");
+    const filtersPanel = document.getElementById("search-filters-panel");
+    toggleBtn.addEventListener("click", () => {
+        const isHidden = filtersPanel.classList.toggle("hidden");
+        toggleBtn.classList.toggle("active", !isHidden);
+        const chevron = toggleBtn.querySelector('[data-lucide="chevron-down"]');
+        if (chevron) {
+            chevron.setAttribute("data-lucide", isHidden ? "chevron-down" : "chevron-up");
+        }
+        if (window.lucide) lucide.createIcons();
+    });
+
     // SEARCH FILTER CONTROLS (SIDEBAR)
     document.querySelectorAll('input[name="filter-category"]').forEach(radio => {
         radio.addEventListener("change", (e) => {
@@ -357,6 +370,19 @@ function setupGlobalListeners() {
         
         // Reset brand check if any
         document.querySelectorAll(".brand-filter-check").forEach(chk => chk.checked = false);
+        
+        // Close filters panel
+        const filtersPanel = document.getElementById("search-filters-panel");
+        const toggleBtn = document.getElementById("btn-toggle-filters");
+        if (filtersPanel && !filtersPanel.classList.contains("hidden")) {
+            filtersPanel.classList.add("hidden");
+            if (toggleBtn) {
+                toggleBtn.classList.remove("active");
+                const chevron = toggleBtn.querySelector('[data-lucide="chevron-down"]');
+                if (chevron) chevron.setAttribute("data-lucide", "chevron-down");
+            }
+            if (window.lucide) lucide.createIcons();
+        }
         
         loadProductsList();
     });
@@ -764,6 +790,19 @@ async function triggerAISearch(query) {
             sortSelect.value = "relevance";
         }
         
+        // Auto-open filters panel when AI applies filters
+        const filtersPanel = document.getElementById("search-filters-panel");
+        const toggleBtn = document.getElementById("btn-toggle-filters");
+        if (filtersPanel && filtersPanel.classList.contains("hidden")) {
+            filtersPanel.classList.remove("hidden");
+            if (toggleBtn) {
+                toggleBtn.classList.add("active");
+                const chevron = toggleBtn.querySelector('[data-lucide="chevron-down"]');
+                if (chevron) chevron.setAttribute("data-lucide", "chevron-up");
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
         // Render results
         renderProductsGrid();
         resultsCount.innerHTML = `Búsqueda Inteligente para: <em>"${query}"</em> (${data.results.length} coincidencias)`;
