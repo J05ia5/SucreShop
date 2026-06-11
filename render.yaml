@@ -2,7 +2,7 @@ services:
   - type: web
     name: sucreshop
     runtime: python
-    buildCommand: pip install -r requirements.txt && python backend/seed.py
+    buildCommand: cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt && python backend/seed.py
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
