@@ -840,5 +840,8 @@ if not os.path.exists(DEFAULT_PRODUCT_PATH):
 # Mount upload directory for static product images and logos
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-# Mount frontend files at root
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+# Mount compiled React frontend if it exists, otherwise fallback to legacy
+if os.path.exists(os.path.join("frontend", "dist")):
+    app.mount("/", StaticFiles(directory=os.path.join("frontend", "dist"), html=True), name="frontend")
+else:
+    app.mount("/", StaticFiles(directory="frontend_legacy", html=True), name="frontend")

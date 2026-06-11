@@ -1,5 +1,17 @@
 import re
+import os
+import json
 from typing import Dict, Any, List
+
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY and GEMINI_API_KEY != "tu_api_key_de_gemini_aqui":
+    genai.configure(api_key=GEMINI_API_KEY)
+else:
+    GEMINI_API_KEY = None
 
 # Categories configured in SucreShop
 CATEGORIES = {
@@ -63,7 +75,7 @@ def normalize_text(text: str) -> str:
         text = text.replace(orig, rep)
     return text
 
-def parse_query(raw_query: str) -> Dict[str, Any]:
+def parse_query_legacy(raw_query: str) -> Dict[str, Any]:
     query = normalize_text(raw_query)
     
     # 1. Detect Category
@@ -250,3 +262,67 @@ def parse_query(raw_query: str) -> Dict[str, Any]:
         "explanation": explanation,
         "sort_by": sort_by
     }
+
+def parse_query(raw_query: str) -> Dict[str, Any]:
+    if not GEMINI_API_KEY:
+        print("Using legacy parsing (No API key found)")
+        return parse_query_legacy(raw_query)
+
+    prompt = f"""
+Actúa como un asistente de compras inteligente para SucreShop, un ecommerce local.
+Debes interpretar la consulta del usuario y extraer los parámetros de búsqueda en formato JSON estricto.
+
+Reglas:
+- category: Puede ser null o una de estas: "Tecnología", "Moda", "Comida", "Hogar", "Deportes", "Belleza".
+- brand: Nombre de la marca (con mayúscula inicial) o null.
+- max_price: Número float o null. Si dice "barato" o "económico" no pongas max_price pero pon is_budget en true.
+- min_price: Número float o null.
+- color: color en minúsculas o null.
+- size: string (talla/tamaño, ej: "M", "42", "250g") o null.
+- specs: diccionario con especificaciones clave-valor (ej: {{"RAM": "16GB", "Disco": "SSD"}}) o {{}}.
+- in_stock_only: booleano. True si busca algo "disponible", "en stock".
+- is_budget: booleano. True si busca ofertas, descuentos o algo barato.
+- sort_by: Puede ser null o uno de: "recent", "most_purchased", "best_rated", "price_asc", "price_desc".
+- explanation: Una frase corta amigable en primera persona explicando qué entendiste (Ej: "Entendí que buscas zapatillas Nike talla 42 por menos de $100.").
+
+Consulta del usuario: "{raw_query}"
+
+Devuelve ÚNICAMENTE un JSON válido (sin formato Markdown, sin ```json).
+    """
+
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        response = model.generate_content(prompt)
+        text = response.text.strip()
+        if text.startswith('```json'):
+            text = text[7:]
+        if text.startswith('```'):
+            text = text[3:]
+        if text.endswith('```'):
+            text = text[:-3]
+        text = text.strip()
+        
+        parsed_data = json.loads(text)
+        
+        # Ensure all required keys exist
+        default_data = parse_query_legacy(raw_query) # get default structure
+        
+        result = {
+            "original_query": raw_query,
+            "category": parsed_data.get("category"),
+            "brand": parsed_data.get("brand"),
+            "max_price": parsed_data.get("max_price"),
+            "min_price": parsed_data.get("min_price"),
+            "color": parsed_data.get("color"),
+            "size": parsed_data.get("size"),
+            "specs": parsed_data.get("specs", {}),
+            "in_stock_only": parsed_data.get("in_stock_only", False),
+            "is_budget": parsed_data.get("is_budget", False),
+            "explanation": parsed_data.get("explanation", default_data["explanation"]),
+            "sort_by": parsed_data.get("sort_by")
+        }
+        print("Using Gemini parsing.")
+        return result
+    except Exception as e:
+        print(f"Gemini API error: {{e}}. Falling back to legacy parsing.")
+        return parse_query_legacy(raw_query)
