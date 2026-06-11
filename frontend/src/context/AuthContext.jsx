@@ -1,16 +1,10 @@
-import React, { createContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useState, useEffect } from 'react';
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [checkoutProduct, setCheckoutProduct] = useState(null);
-  const [cart, setCart] = useState([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-
-  useEffect(() => {
-    // Check if token exists in localStorage
+  const [user, setUser] = useState(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     const storeId = localStorage.getItem('storeId');
@@ -18,28 +12,31 @@ export function AuthProvider({ children }) {
     const email = localStorage.getItem('email');
     
     if (token && role) {
-      setUser({ token, role, storeId, fullName, email });
+      return { token, role, storeId, fullName, email };
     }
-
-    // Load cart from localStorage
+    return null;
+  });
+  
+  const [checkoutProduct, setCheckoutProduct] = useState(null);
+  
+  const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
       try {
-        setCart(JSON.parse(savedCart));
+        return JSON.parse(savedCart);
       } catch (e) {
         console.error('Error parsing cart from localStorage', e);
       }
     }
-
-    setLoading(false);
-  }, []);
+    return [];
+  });
+  
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Sync cart to localStorage whenever it changes
   useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('cart', JSON.stringify(cart));
-    }
-  }, [cart, loading]);
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
 
   const login = (token, role, storeId, fullName, email) => {
     localStorage.setItem('token', token);
@@ -118,7 +115,7 @@ export function AuthProvider({ children }) {
       user, 
       login, 
       logout, 
-      loading, 
+      loading: false, 
       checkoutProduct, 
       openCheckout, 
       closeCheckout,
@@ -130,7 +127,7 @@ export function AuthProvider({ children }) {
       openCart,
       closeCart
     }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

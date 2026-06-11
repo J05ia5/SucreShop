@@ -1,6 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Sparkles, ShieldCheck, Users, Zap, Heart, Globe, GraduationCap, Code, Database, Palette, Brain, Server, Smartphone } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Sparkles, ShieldCheck, Users, Zap, Heart, Globe, GraduationCap, Brain } from 'lucide-react';
 import './About.css';
 
 function AnimatedStat({ end, suffix = '', label }) {
@@ -46,8 +45,6 @@ function AnimatedStat({ end, suffix = '', label }) {
 }
 
 export default function About() {
-  const navigate = useNavigate();
-
   const team = [
     {
       name: 'Sebastián Mollinedo',

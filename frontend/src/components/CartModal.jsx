@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import { useState, useContext } from 'react';
 import { CreditCard, Smartphone, CheckCircle, X, Trash2, AlertTriangle } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../utils/api';
@@ -10,6 +10,14 @@ export default function CartModal() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [reservationResults, setReservationResults] = useState([]);
+
+  const handleClose = () => {
+    if (step === 2) {
+      handleFinish();
+    } else {
+      closeCart();
+    }
+  };
 
   if (!isCartOpen) return null;
 
@@ -42,7 +50,7 @@ export default function CartModal() {
       const results = await Promise.all(promises);
       setReservationResults(results);
       setStep(2);
-    } catch (err) {
+    } catch {
       setError('Error al procesar las reservas. Intenta nuevamente.');
     } finally {
       setLoading(false);
@@ -76,7 +84,7 @@ export default function CartModal() {
       <div className="cart-modal-box">
         <div className="cart-modal-header">
           <h3>Carrito de Reservas</h3>
-          <button className="btn-close-modal" onClick={closeCart} disabled={loading}>
+          <button className="btn-close-modal" onClick={handleClose} disabled={loading}>
             <X size={20} />
           </button>
         </div>

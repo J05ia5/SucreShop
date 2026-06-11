@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useState } from 'react';
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ShoppingBag, ClipboardList, Settings, Plus, Edit, Trash2, X, AlertCircle } from 'lucide-react';
@@ -50,16 +51,10 @@ export default function StoreDashboard() {
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
 
-  useEffect(() => {
-    if (!user || (user.role !== 'store' && user.role !== 'buyer')) {
-      navigate('/login');
-      return;
+  const loadDashboardData = useCallback(async (showLoading = false) => {
+    if (showLoading) {
+      setLoading(true);
     }
-    loadDashboardData();
-  }, [user, navigate]);
-
-  const loadDashboardData = async () => {
-    setLoading(true);
     try {
       if (user.role === 'store') {
         const storeData = await api.getMyStoreProfile();
@@ -93,7 +88,15 @@ export default function StoreDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || (user.role !== 'store' && user.role !== 'buyer')) {
+      navigate('/login');
+      return;
+    }
+    loadDashboardData(false);
+  }, [user, navigate, loadDashboardData]);
 
   const handleOpenProductModal = (product = null) => {
     setProductModalError('');
@@ -149,7 +152,7 @@ export default function StoreDashboard() {
       try {
         JSON.parse(productForm.specs_json);
         formData.append('specs_json', productForm.specs_json.trim());
-      } catch (err) {
+      } catch {
         setProductModalError('El formato de Especificaciones JSON no es válido.');
         return;
       }
@@ -484,7 +487,7 @@ export default function StoreDashboard() {
                 <h3>Solicitudes de Reserva</h3>
                 <button 
                   className="btn btn-outline btn-sm" 
-                  onClick={loadDashboardData}
+                  onClick={() => loadDashboardData(true)}
                   disabled={loading}
                 >
                   Refrescar

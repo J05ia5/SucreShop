@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { Search as SearchIcon, Sparkles, X, SlidersHorizontal, ArrowUpDown, Tag } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { AuthContext } from '../context/AuthContext';
@@ -31,7 +31,7 @@ export default function Search() {
   const [aiResults, setAiResults] = useState(null);
   const [results, setResults] = useState([]);
   const [insights, setInsights] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
   const [filters, setFilters] = useState({ ...INITIAL_FILTERS });
@@ -40,7 +40,6 @@ export default function Search() {
 
   // Load all products on mount
   useEffect(() => {
-    setLoading(true);
     fetch('/api/products')
       .then(res => res.json())
       .then(data => {
@@ -86,7 +85,7 @@ export default function Search() {
     }
     const baseData = aiResults !== null ? aiResults : allProducts;
     setResults(applyLocalFilters(baseData, filters));
-  }, [filters, allProducts, aiResults]);
+  }, [filters, allProducts, aiResults, initialLoad]);
 
   const handleSearch = (e) => {
     e.preventDefault();

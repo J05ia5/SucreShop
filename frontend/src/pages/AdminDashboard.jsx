@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useState } from 'react';
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ShieldCheck, Clock, CheckCircle, XCircle, Trash2, Eye, X, Globe } from 'lucide-react';
@@ -52,27 +53,11 @@ export default function AdminDashboard() {
   const [actionStoreId, setActionStoreId] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    if (!user || user.role !== 'admin') {
-      navigate('/login');
-      return;
-    }
-    loadStores();
-  }, [user]);
+  const activeFilterRef = useRef(activeFilter);
 
-  const loadStores = async () => {
-    setLoading(true);
-    try {
-      const data = await api.adminGetStores();
-      setStores(data);
-      calculateStats(data);
-      filterAndSetStores(data, activeFilter);
-    } catch (err) {
-      console.error('Error loading admin stores:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    activeFilterRef.current = activeFilter;
+  }, [activeFilter]);
 
   const calculateStats = (data) => {
     const pending = data.filter(s => s.status === 'pending').length;
@@ -89,6 +74,30 @@ export default function AdminDashboard() {
       setFilteredStores(data.filter(s => s.status === filter));
     }
   };
+
+  const loadStores = useCallback(async (showLoading = false) => {
+    if (showLoading) {
+      setLoading(true);
+    }
+    try {
+      const data = await api.adminGetStores();
+      setStores(data);
+      calculateStats(data);
+      filterAndSetStores(data, activeFilterRef.current);
+    } catch (err) {
+      console.error('Error loading admin stores:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user || user.role !== 'admin') {
+      navigate('/login');
+      return;
+    }
+    loadStores(false);
+  }, [user, navigate, loadStores]);
 
   const handleFilterChange = (filter) => {
     setActiveFilter(filter);

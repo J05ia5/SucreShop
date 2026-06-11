@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Star, MapPin, ArrowRight, Store } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
@@ -37,10 +37,6 @@ export default function Landing() {
       });
   }, []);
 
-  // Count products per store
-  const getStoreProductCount = (storeId) => {
-    return products.filter(p => p.store_id === storeId).length;
-  };
 
   const renderStars = (rating) => {
     const stars = [];

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './ProductCard.css';
 
 export default function ProductCard({ product, onBuy }) {
