@@ -5,7 +5,7 @@ import { AuthContext } from '../context/AuthContext';
 import './Navbar.css';
 
 export default function Navbar() {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, cart, openCart } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -30,8 +30,11 @@ export default function Navbar() {
           <Link to="/explore" className="action-btn">
             <Search size={20} />
           </Link>
-          <button className="action-btn">
+          <button className="action-btn navbar-cart-btn" onClick={openCart} title="Carrito de Compras">
             <ShoppingBag size={20} />
+            {cart.length > 0 && (
+              <span className="navbar-cart-badge">{cart.length}</span>
+            )}
           </button>
           
           {user ? (

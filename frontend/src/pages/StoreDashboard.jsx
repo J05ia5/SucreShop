@@ -15,6 +15,7 @@ export default function StoreDashboard() {
   const [products, setProducts] = useState([]);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [buyerRequests, setBuyerRequests] = useState([]);
 
   // Product modal / editor state
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -50,40 +51,45 @@ export default function StoreDashboard() {
   const [profileSuccess, setProfileSuccess] = useState('');
 
   useEffect(() => {
-    if (!user || user.role !== 'store') {
+    if (!user || (user.role !== 'store' && user.role !== 'buyer')) {
       navigate('/login');
       return;
     }
     loadDashboardData();
-  }, [user]);
+  }, [user, navigate]);
 
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const storeData = await api.getMyStoreProfile();
-      setMyStore(storeData);
-      
-      // Load products
-      const productsData = await api.getStoreProducts(storeData.id);
-      setProducts(productsData);
+      if (user.role === 'store') {
+        const storeData = await api.getMyStoreProfile();
+        setMyStore(storeData);
+        
+        // Load products
+        const productsData = await api.getStoreProducts(storeData.id);
+        setProducts(productsData);
 
-      // Load requests
-      const requestsData = await api.getStoreRequests();
-      setRequests(requestsData);
+        // Load requests
+        const requestsData = await api.getStoreRequests();
+        setRequests(requestsData);
 
-      // Populate profile form
-      setProfileForm({
-        name: storeData.name || '',
-        description: storeData.description || '',
-        address: storeData.address || '',
-        phone: storeData.phone || '',
-        website_url: storeData.website_url || '',
-        instagram_url: storeData.instagram_url || '',
-        facebook_url: storeData.facebook_url || '',
-        twitter_url: storeData.twitter_url || ''
-      });
+        // Populate profile form
+        setProfileForm({
+          name: storeData.name || '',
+          description: storeData.description || '',
+          address: storeData.address || '',
+          phone: storeData.phone || '',
+          website_url: storeData.website_url || '',
+          instagram_url: storeData.instagram_url || '',
+          facebook_url: storeData.facebook_url || '',
+          twitter_url: storeData.twitter_url || ''
+        });
+      } else if (user.role === 'buyer') {
+        const buyerRequestsData = await api.getMyRequests();
+        setBuyerRequests(buyerRequestsData);
+      }
     } catch (err) {
-      console.error('Error loading store dashboard data:', err);
+      console.error('Error loading dashboard data:', err);
     } finally {
       setLoading(false);
     }
@@ -221,6 +227,12 @@ export default function StoreDashboard() {
       alert('Reserva confirmada. Stock actualizado.');
       const rData = await api.getStoreRequests();
       setRequests(rData);
+      
+      // Reload products to update stock in catalog
+      if (myStore) {
+        const pData = await api.getStoreProducts(myStore.id);
+        setProducts(pData);
+      }
     } catch (err) {
       alert('Error al confirmar: ' + err.message);
     }
@@ -233,6 +245,12 @@ export default function StoreDashboard() {
       alert('Producto marcado como entregado.');
       const rData = await api.getStoreRequests();
       setRequests(rData);
+      
+      // Reload products to update stock in catalog
+      if (myStore) {
+        const pData = await api.getStoreProducts(myStore.id);
+        setProducts(pData);
+      }
     } catch (err) {
       alert('Error al marcar entrega: ' + err.message);
     }
@@ -245,13 +263,86 @@ export default function StoreDashboard() {
       alert('Solicitud rechazada.');
       const rData = await api.getStoreRequests();
       setRequests(rData);
+      
+      // Reload products to update stock in catalog
+      if (myStore) {
+        const pData = await api.getStoreProducts(myStore.id);
+        setProducts(pData);
+      }
     } catch (err) {
       alert('Error al rechazar: ' + err.message);
     }
   };
 
   if (!user) return null;
-  if (loading && !myStore) return <div className="container section-padding">Cargando panel de control...</div>;
+  if (loading) return <div className="container section-padding">Cargando panel de control...</div>;
+
+  if (user.role === 'buyer') {
+    return (
+      <div className="dashboard-page container section-padding">
+        <div className="dashboard-header-block">
+          <div className="dash-store-badge-card">
+            <div className="buyer-avatar-placeholder">
+              {user.fullName.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-h2" style={{ marginBottom: 4 }}>Mi Panel de Usuario</h1>
+              <p className="text-muted">Cliente: {user.fullName} | Email: {user.email}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="dashboard-card">
+          <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Mis Reservas Realizadas</h3>
+          <p className="text-muted" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            Presenta las claves de recogida en las tiendas locales correspondientes para retirar y pagar tus productos.
+          </p>
+
+          <div className="requests-cards-list">
+            {buyerRequests.length === 0 ? (
+              <div className="text-center" style={{ padding: '40px', color: 'var(--text-muted)' }}>
+                No tienes ninguna reserva registrada en tu historial.
+              </div>
+            ) : (
+              buyerRequests.map(req => (
+                <div className="request-card-item" key={req.id}>
+                  <div className="request-card-img-details">
+                    <img 
+                      src={req.product_image || '/uploads/default_product.png'} 
+                      alt={req.product_name}
+                      className="request-prod-img"
+                    />
+                    <div>
+                      <h4>{req.product_name}</h4>
+                      <p className="req-price">${req.product_price ? req.product_price.toFixed(2) : '0.00'}</p>
+                      <p className="req-store-info">
+                        Comercio: <strong>{req.store_name}</strong> {req.store_phone && `(Teléfono: ${req.store_phone})`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="request-card-status-info">
+                    <div className="req-key-container">
+                      <span className="key-title">Clave de Recogida</span>
+                      <span className="key-code" style={{ letterSpacing: '1px', fontFamily: 'monospace' }}>
+                        {req.product_key}
+                      </span>
+                    </div>
+
+                    <div className="req-status-badge">
+                      <span className={`badge badge-state-${req.status}`}>
+                        {req.status.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-page container section-padding">
@@ -389,8 +480,17 @@ export default function StoreDashboard() {
           {/* REQUESTS TAB */}
           {activeTab === 'requests' && (
             <div className="dashboard-card">
-              <h3>Solicitudes de Reserva</h3>
-              <p className="text-muted" style={{ marginBottom: 'var(--spacing-lg)' }}>
+              <div className="card-header-flex">
+                <h3>Solicitudes de Reserva</h3>
+                <button 
+                  className="btn btn-outline btn-sm" 
+                  onClick={loadDashboardData}
+                  disabled={loading}
+                >
+                  Refrescar
+                </button>
+              </div>
+              <p className="text-muted" style={{ marginBottom: 'var(--spacing-lg)', marginTop: '-10px' }}>
                 Monitorea y confirma las solicitudes de recogida de tus clientes locales.
               </p>
               

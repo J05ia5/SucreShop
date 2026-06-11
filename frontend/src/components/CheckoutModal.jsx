@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { CreditCard, Smartphone, CheckCircle, X, Star } from 'lucide-react';
 import api from '../utils/api';
+import { AuthContext } from '../context/AuthContext';
 import './CheckoutModal.css';
 
 export default function CheckoutModal({ product, isOpen, onClose }) {
+  const { addToCart } = useContext(AuthContext);
   const [step, setStep] = useState(1); // 1: Confirm payment, 2: Key & Rate
   const [loading, setLoading] = useState(false);
   const [productKey, setProductKey] = useState('');
@@ -124,8 +126,15 @@ export default function CheckoutModal({ product, isOpen, onClose }) {
               </button>
             </div>
 
-            <div className="checkout-actions">
-              <button className="btn btn-outline" onClick={onClose} disabled={loading}>
+            <div className="checkout-actions" style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn btn-outline" 
+                onClick={() => { addToCart(product); onClose(); }} 
+                disabled={loading}
+              >
+                Añadir al Carrito
+              </button>
+              <button className="btn btn-primary" onClick={onClose} disabled={loading}>
                 Cancelar
               </button>
             </div>

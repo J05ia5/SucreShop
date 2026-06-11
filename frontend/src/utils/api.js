@@ -104,6 +104,13 @@ const api = {
     });
   },
 
+  async getMyRequests() {
+    return this.request(`${API_BASE}/api/requests/me`, {
+      method: "GET",
+      headers: this.getHeaders(false)
+    });
+  },
+
   async confirmRequest(requestId) {
     return this.request(`${API_BASE}/api/requests/${requestId}/confirm`, {
       method: "PUT",

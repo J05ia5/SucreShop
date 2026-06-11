@@ -510,3 +510,22 @@
   margin-bottom: 12px;
 }
 
+.buyer-avatar-placeholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border: 2px solid var(--border-default);
+}
+
+.req-store-info {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+

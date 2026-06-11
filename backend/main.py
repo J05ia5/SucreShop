@@ -453,6 +453,29 @@ def get_store_requests(
         r.buyer_phone = None
     return requests
 
+@app.get("/api/requests/me", response_model=List[schemas.PurchaseRequestResponse])
+def get_buyer_requests(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    requests = (
+        db.query(models.PurchaseRequest)
+        .filter(models.PurchaseRequest.buyer_id == current_user.id)
+        .order_by(models.PurchaseRequest.created_at.desc())
+        .all()
+    )
+    for r in requests:
+        r.product_name = r.product.name
+        r.product_image = r.product.image_url
+        r.product_price = r.product.price
+        store = r.product.store
+        r.store_name = store.name if store else "Tienda Desconocida"
+        r.store_phone = store.phone if store else None
+        r.buyer_name = current_user.full_name
+        r.buyer_email = current_user.email
+        r.buyer_phone = None
+    return requests
+
 @app.put("/api/requests/{request_id}/confirm", response_model=schemas.PurchaseRequestResponse)
 def confirm_purchase_request(
     request_id: int,

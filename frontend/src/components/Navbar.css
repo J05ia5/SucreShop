@@ -85,3 +85,25 @@
 .action-btn:hover {
   transform: translateY(-2px);
 }
+
+.navbar-cart-btn {
+  position: relative;
+}
+
+.navbar-cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: var(--accent-badge);
+  color: var(--text-light);
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  font-family: var(--font-family-base);
+}

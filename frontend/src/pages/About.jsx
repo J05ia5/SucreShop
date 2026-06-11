@@ -50,21 +50,21 @@ export default function About() {
 
   const team = [
     {
-      name: 'Andrés Villarroel',
+      name: 'Sebastián Mollinedo',
       role: 'Full-Stack Developer',
-      initials: 'AV',
+      initials: 'SM',
       desc: 'Arquitecto del backend y sistema de autenticación. Apasionado por las APIs RESTful y la seguridad de datos.'
     },
     {
-      name: 'Camila Mendoza',
+      name: 'Josias Quispe',
       role: 'Frontend & UX Designer',
-      initials: 'CM',
+      initials: 'JQ',
       desc: 'Diseñadora de la interfaz y experiencia de usuario. Especialista en diseño responsivo y micro-animaciones.'
     },
     {
-      name: 'Diego Torrez',
+      name: 'Álvaro Arancibia',
       role: 'AI & Data Engineer',
-      initials: 'DT',
+      initials: 'AA',
       desc: 'Desarrollador del motor de búsqueda inteligente con IA. Investigador en procesamiento de lenguaje natural.'
     }
   ];

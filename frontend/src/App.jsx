@@ -12,6 +12,7 @@ import StoreDashboard from './pages/StoreDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import About from './pages/About';
 import CheckoutModal from './components/CheckoutModal';
+import CartModal from './components/CartModal';
 
 function AppContent() {
   const { checkoutProduct, closeCheckout } = useContext(AuthContext);
@@ -33,11 +34,14 @@ function AppContent() {
           </Routes>
         </main>
         <Footer />
-        <CheckoutModal 
-          product={checkoutProduct} 
-          isOpen={!!checkoutProduct} 
-          onClose={closeCheckout} 
-        />
+        {checkoutProduct && (
+          <CheckoutModal 
+            product={checkoutProduct} 
+            isOpen={!!checkoutProduct} 
+            onClose={closeCheckout} 
+          />
+        )}
+        <CartModal />
       </div>
     </Router>
   );

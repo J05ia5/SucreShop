@@ -9,6 +9,19 @@ from backend.database import SessionLocal, engine
 from backend import models, auth
 
 def seed_db():
+    # Check if database already has users to avoid wiping it on restart
+    db = SessionLocal()
+    try:
+        user_count = db.query(models.User).count()
+        if user_count > 0:
+            print("La base de datos ya contiene datos. Omitiendo poblado inicial.")
+            return
+    except Exception:
+        # Tables might not exist, proceed with seed
+        pass
+    finally:
+        db.close()
+
     print("Iniciando el poblado de la base de datos...")
     
     # Recreate tables to ensure clean state
